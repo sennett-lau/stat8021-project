@@ -237,7 +237,6 @@ class RTHKCrawler(NewsCrawlerBase):
     """RTHK English news crawler"""
     def __init__(self):
         super().__init__()
-        # Define RTHK English RSS feed categories
         self.feed_categories = {
             'local': 'https://rthk.hk/rthk/news/rss/e_expressnews_elocal.xml',
             'greater_china': 'https://rthk.hk/rthk/news/rss/e_expressnews_egreaterchina.xml',
@@ -253,70 +252,88 @@ class RTHKCrawler(NewsCrawlerBase):
         for category, feed_url in self.feed_categories.items():
             try:
                 logging.info(f"Parsing RTHK {category} feed")
-                feed = feedparser.parse(feed_url)
                 
-                for entry in feed.entries:
-                    article = {
-                        'source': 'RTHK',
-                        'category': category,
-                        'title': entry.get('title', ''),
-                        'link': entry.get('link', ''),
-                        'description': entry.get('description', ''),
-                        'pub_date': entry.get('published', ''),
-                        'author': entry.get('author', '')
-                    }
+                # Get the raw XML content
+                response = requests.get(feed_url, headers=self.headers, timeout=10)
+                response.raise_for_status()
+                
+                # Parse XML directly
+                root = ET.fromstring(response.content)
+                channel = root.find('channel')
+                if channel is None:
+                    continue
+                
+                # Get all descriptions from the feed
+                description_elem = channel.find('description')
+                if description_elem is None or not description_elem.text:
+                    continue
                     
-                    # Clean and format the published date
+                # Split the description into individual articles
+                articles_text = description_elem.text.split('\n\n\n')
+                
+                for article_text in articles_text:
+                    if not article_text.strip():
+                        continue
+                        
                     try:
-                        if article['pub_date']:
-                            parsed_date = datetime.strptime(
-                                article['pub_date'], 
-                                '%a, %d %b %Y %H:%M:%S %z'
-                            )
-                            article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                        # Split into title and content
+                        parts = article_text.strip().split('\n\n', 2)
+                        if len(parts) < 2:
+                            continue
+                            
+                        title = parts[0].replace('(with hyperlink)', '').strip()
+                        pub_date = parts[1].strip()
+                        content = parts[2].strip() if len(parts) > 2 else ''
+                        
+                        # Clean text by removing newlines and multiple spaces
+                        content = ' '.join(content.split())
+                        
+                        article = {
+                            'source': 'RTHK',
+                            'category': category,
+                            'title': title,
+                            'description': content,
+                            'pub_date': pub_date,
+                            'full_content': content,
+                        }
+                        
+                        # Clean and format the published date
+                        try:
+                            if article['pub_date']:
+                                parsed_date = datetime.strptime(
+                                    article['pub_date'], 
+                                    '%a, %d %b %Y %H:%M:%S %z'
+                                )
+                                article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                        except Exception as e:
+                            logging.warning(f"Date parsing error: {str(e)}")
+                            article['pub_date_formatted'] = article['pub_date']
+                        
+                        all_articles.append(article)
+                        
                     except Exception as e:
-                        logging.warning(f"Date parsing error: {str(e)}")
-                        article['pub_date_formatted'] = article['pub_date']
-                    
-                    # Extract detailed content if link is available
-                    if article['link']:
-                        logging.info(f"Extracting content from {article['link']}")
-                        content = self.extract_article_content(article['link'])
-                        article.update(content)
-                    
-                    all_articles.append(article)
-                    time.sleep(1)  # Polite delay between requests
+                        logging.error(f"Error parsing article text: {str(e)}")
+                        continue
+                
+                time.sleep(2)  # Polite delay between feed requests
                     
             except Exception as e:
                 logging.error(f"Error parsing RTHK {category} feed: {str(e)}")
                 continue
-                
+            
         return all_articles
 
+    def _get_element_text(self, item, tag):
+        """Helper method to safely get element text"""
+        element = item.find(tag)
+        return element.text if element is not None else ''
+
     def extract_article_content(self, url):
-        try:
-            response = requests.get(url, headers=self.headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            content = ''
-            # Try different possible content div classes for English articles
-            content_div = (
-                soup.find('div', class_='article-detail') or 
-                soup.find('div', class_='article-content') or
-                soup.find('div', {'id': 'article-content'})
-            )
-            
-            if content_div:
-                # Get all text elements, including headers
-                text_elements = content_div.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
-                content = ' '.join([elem.get_text().strip() for elem in text_elements])
-            
-            return {'full_content': content}
-            
-        except Exception as e:
-            logging.error(f"Error extracting RTHK content from {url}: {str(e)}")
-            return {'full_content': ''}
+        """
+        Minimal implementation to satisfy abstract base class.
+        We're not using this since we get content directly from RSS feed.
+        """
+        return {'full_content': ''}
 
 def main():
     try:
@@ -337,15 +354,15 @@ def main():
         scmp_articles = scmp_crawler.parse_feed()
         articles_by_source['SCMP'].extend(scmp_articles)
         
-        # # Crawl HKFP
-        # hkfp_crawler = HKFPCrawler()
-        # hkfp_articles = hkfp_crawler.parse_feed()
-        # articles_by_source['HKFP'].extend(hkfp_articles)
+        # Crawl HKFP
+        hkfp_crawler = HKFPCrawler()
+        hkfp_articles = hkfp_crawler.parse_feed()
+        articles_by_source['HKFP'].extend(hkfp_articles)
         
-        # # Crawl RTHK
-        # rthk_crawler = RTHKCrawler()
-        # rthk_articles = rthk_crawler.parse_feed()
-        # articles_by_source['RTHK'].extend(rthk_articles)
+        # Crawl RTHK
+        rthk_crawler = RTHKCrawler()
+        rthk_articles = rthk_crawler.parse_feed()
+        articles_by_source['RTHK'].extend(rthk_articles)
         
         # Process and save each source separately
         dataframes = {}
