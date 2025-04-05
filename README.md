@@ -1,8 +1,7 @@
 # stat8021-project
 
-news articles from 5 sources:
+news articles from 5 sources inside folder `hk_news`:
 - SCMP (550 articles)
-- HKFP
+- HKFP (50 articles)
 - RTHK (100 articles)
-- The Standard
-- The Post
+- hket

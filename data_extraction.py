@@ -174,64 +174,113 @@ class HKFPCrawler(NewsCrawlerBase):
     """Hong Kong Free Press crawler"""
     def __init__(self):
         super().__init__()
-        self.feed_url = 'https://hongkongfp.com/feed/'
+        self.base_url = 'https://hongkongfp.com'
 
     def parse_feed(self):
+        """Parse HKFP main page and individual articles"""
+        all_articles = []
+        
         try:
-            feed = feedparser.parse(self.feed_url)
-            articles = []
+            # Get the main page
+            response = requests.get(self.base_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
             
-            for entry in feed.entries:
-                article = {
-                    'source': 'HKFP',
-                    'category': 'news',  # Default category
-                    'title': entry.get('title', ''),
-                    'link': entry.get('link', ''),
-                    'description': entry.get('description', ''),
-                    'pub_date': entry.get('published', ''),
-                    'author': entry.get('author', '')
-                }
-                
-                # Clean and format the published date
+            # Find all article elements with data-post-id
+            article_elements = soup.find_all('article', attrs={'data-post-id': True})
+            
+            for article_elem in article_elements:
                 try:
-                    if article['pub_date']:
-                        parsed_date = datetime.strptime(
-                            article['pub_date'], 
-                            '%a, %d %b %Y %H:%M:%S %z'
-                        )
-                        article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    # Get article ID and link
+                    article_id = article_elem.get('data-post-id')
+                    link_elem = article_elem.find('a', attrs={'rel': 'bookmark'})
+                    
+                    if not link_elem or not article_id:
+                        continue
+                        
+                    article_url = link_elem.get('href')
+                    if not article_url:
+                        continue
+                    
+                    # Get article content
+                    article_content = self.extract_article_content(article_url)
+                    if not article_content:
+                        continue
+                    
+                    # Get basic article info from the main page
+                    title_elem = article_elem.find('h2', class_='entry-title')
+                    date_elem = article_elem.find('time', class_='entry-date')
+                    
+                    article = {
+                        'source': 'HKFP',
+                        'article_id': article_id,
+                        'title': title_elem.get_text().strip() if title_elem else '',
+                        'link': article_url,
+                        'pub_date': date_elem.get('datetime') if date_elem else '',
+                    }
+                    
+                    # Update with detailed content
+                    article.update(article_content)
+                    
+                    # Clean and format the published date
+                    try:
+                        if article['pub_date']:
+                            parsed_date = datetime.fromisoformat(article['pub_date'].replace('Z', '+00:00'))
+                            article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        logging.warning(f"Date parsing error: {str(e)}")
+                        article['pub_date_formatted'] = article['pub_date']
+                    
+                    all_articles.append(article)
+                    time.sleep(2)  # Polite delay between article requests
+                    
                 except Exception as e:
-                    logging.warning(f"Date parsing error: {str(e)}")
-                    article['pub_date_formatted'] = article['pub_date']
-                
-                if article['link']:
-                    content = self.extract_article_content(article['link'])
-                    article.update(content)
-                
-                articles.append(article)
-                time.sleep(1)
-                
-            return articles
+                    logging.error(f"Error processing article element: {str(e)}")
+                    continue
+            
+            return all_articles
+            
         except Exception as e:
             logging.error(f"Error parsing HKFP feed: {str(e)}")
             return []
 
     def extract_article_content(self, url):
+        """Extract content from individual HKFP article pages"""
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             
             content = ''
+            description = ''
+            author = ''
+            
+            # Get article content
             content_div = soup.find('div', class_='entry-content')
             if content_div:
-                paragraphs = content_div.find_all('p')
-                content = ' '.join([p.get_text().strip() for p in paragraphs])
+                # Get all paragraphs but exclude certain classes
+                paragraphs = content_div.find_all('p', class_=lambda x: x is None or 'support' not in x)
+                content = ' '.join(p.get_text().strip() for p in paragraphs)
             
-            return {'full_content': content}
+            # Get article description/excerpt
+            excerpt = soup.find('div', class_='entry-excerpt')
+            if excerpt:
+                description = excerpt.get_text().strip()
+            
+            # Get author
+            author_elem = soup.find('a', class_='url fn n')
+            if author_elem:
+                author = author_elem.get_text().strip()
+            
+            return {
+                'description': description,
+                'full_content': content,
+                'author': author
+            }
+            
         except Exception as e:
             logging.error(f"Error extracting HKFP content from {url}: {str(e)}")
-            return {'full_content': ''}
+            return {}
 
 class RTHKCrawler(NewsCrawlerBase):
     """RTHK English news crawler"""
@@ -263,37 +312,34 @@ class RTHKCrawler(NewsCrawlerBase):
                 if channel is None:
                     continue
                 
-                # Get all descriptions from the feed
-                description_elem = channel.find('description')
-                if description_elem is None or not description_elem.text:
-                    continue
-                    
-                # Split the description into individual articles
-                articles_text = description_elem.text.split('\n\n\n')
-                
-                for article_text in articles_text:
-                    if not article_text.strip():
-                        continue
-                        
+                # Process each item in the feed
+                for item in channel.findall('item'):
                     try:
-                        # Split into title and content
-                        parts = article_text.strip().split('\n\n', 2)
-                        if len(parts) < 2:
+                        # Get title without hyperlink
+                        title = self._get_element_text(item, 'title')
+                        if '(with hyperlink)' in title:
+                            title = title.replace('(with hyperlink)', '').strip()
+                        
+                        # Get description and parse its content
+                        description = self._get_element_text(item, 'description')
+                        if not description or description.isspace():
                             continue
                             
-                        title = parts[0].replace('(with hyperlink)', '').strip()
-                        pub_date = parts[1].strip()
-                        content = parts[2].strip() if len(parts) > 2 else ''
-                        
-                        # Clean text by removing newlines and multiple spaces
-                        content = ' '.join(content.split())
+                        # Split description into lines and clean them
+                        lines = [line.strip() for line in description.split('\n') if line.strip()]
+                        if not lines:
+                            continue
+                            
+                        # Join all lines with spaces to create single-line content
+                        content = ' '.join(lines)
                         
                         article = {
                             'source': 'RTHK',
                             'category': category,
                             'title': title,
+                            'link': self._get_element_text(item, 'link'),
                             'description': content,
-                            'pub_date': pub_date,
+                            'pub_date': self._get_element_text(item, 'pubDate'),
                             'full_content': content,
                         }
                         
@@ -312,7 +358,7 @@ class RTHKCrawler(NewsCrawlerBase):
                         all_articles.append(article)
                         
                     except Exception as e:
-                        logging.error(f"Error parsing article text: {str(e)}")
+                        logging.error(f"Error parsing article: {str(e)}")
                         continue
                 
                 time.sleep(2)  # Polite delay between feed requests
@@ -335,13 +381,115 @@ class RTHKCrawler(NewsCrawlerBase):
         """
         return {'full_content': ''}
 
+class HKETCrawler(NewsCrawlerBase):
+    """Hong Kong Economic Times crawler"""
+    def __init__(self):
+        super().__init__()
+        self.feed_categories = {
+            'hongkong': 'https://www.hket.com/rss/hongkong',
+            'lifestyle': 'https://www.hket.com/rss/lifestyle',
+            'finance': 'https://www.hket.com/rss/finance',
+            'china': 'https://www.hket.com/rss/china',
+            'world': 'https://www.hket.com/rss/world',
+            'technology': 'https://www.hket.com/rss/technology',
+            'entertainment': 'https://www.hket.com/rss/entertainment'
+        }
+
+    def parse_feed(self):
+        """Parse HKET RSS feeds"""
+        all_articles = []
+        
+        for category, feed_url in self.feed_categories.items():
+            try:
+                logging.info(f"Parsing HKET {category} feed")
+                
+                # Get the raw XML content
+                response = requests.get(feed_url, headers=self.headers, timeout=10)
+                response.raise_for_status()
+                
+                # Parse XML directly
+                root = ET.fromstring(response.content)
+                channel = root.find('channel')
+                if channel is None:
+                    continue
+                
+                # Process each item in the feed
+                for item in channel.findall('item'):
+                    try:
+                        # Get title and clean it
+                        title = self._get_element_text(item, 'title')
+                        if not title:
+                            continue
+                            
+                        # Get description and clean it
+                        description = self._get_element_text(item, 'description')
+                        if not description or description.isspace():
+                            continue
+                            
+                        # Clean text by removing newlines and multiple spaces
+                        description = ' '.join(description.split())
+                        
+                        article = {
+                            'source': 'HKET',
+                            'category': category,
+                            'title': title,
+                            'link': self._get_element_text(item, 'link'),
+                            'description': description,
+                            'pub_date': self._get_element_text(item, 'pubDate'),
+                            'full_content': description,  # Using description as content
+                            'guid': self._get_element_text(item, 'guid')
+                        }
+                        
+                        # Clean and format the published date
+                        try:
+                            if article['pub_date']:
+                                parsed_date = datetime.strptime(
+                                    article['pub_date'], 
+                                    '%a, %d %b %Y %H:%M:%S %z'
+                                )
+                                article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                        except Exception as e:
+                            logging.warning(f"Date parsing error: {str(e)}")
+                            article['pub_date_formatted'] = article['pub_date']
+                        
+                        # Get media content if available
+                        media_content = item.find('{http://search.yahoo.com/mrss/}content')
+                        if media_content is not None:
+                            article['media_url'] = media_content.get('url', '')
+                        
+                        all_articles.append(article)
+                        
+                    except Exception as e:
+                        logging.error(f"Error parsing article: {str(e)}")
+                        continue
+                
+                time.sleep(2)  # Polite delay between feed requests
+                    
+            except Exception as e:
+                logging.error(f"Error parsing HKET {category} feed: {str(e)}")
+                continue
+            
+        return all_articles
+
+    def _get_element_text(self, item, tag):
+        """Helper method to safely get element text"""
+        element = item.find(tag)
+        return element.text if element is not None else ''
+
+    def extract_article_content(self, url):
+        """
+        Minimal implementation to satisfy abstract base class.
+        We're not using this since we get content directly from RSS feed.
+        """
+        return {'full_content': ''}
+
 def main():
     try:
-        # Dictionary to store articles by source
         articles_by_source = {
             'SCMP': [],
             'HKFP': [],
-            'RTHK': []
+            'RTHK': [],
+            'HKET': [],
         }
         
         # Create output directory
@@ -364,6 +512,11 @@ def main():
         rthk_articles = rthk_crawler.parse_feed()
         articles_by_source['RTHK'].extend(rthk_articles)
         
+        # Crawl HKET
+        hket_crawler = HKETCrawler()
+        hket_articles = hket_crawler.parse_feed()
+        articles_by_source['HKET'].extend(hket_articles)
+        
         # Process and save each source separately
         dataframes = {}
         for source, articles in articles_by_source.items():
@@ -371,8 +524,7 @@ def main():
                 # Create DataFrame
                 df = pd.DataFrame(articles)
                 
-                # Remove rows with missing values
-                df = df.dropna(subset=['title', 'description', 'full_content'])
+            
                 
                 # Clean all text columns by removing newlines and multiple spaces
                 text_columns = ['title', 'description', 'full_content', 'author']
