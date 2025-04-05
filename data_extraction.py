@@ -91,30 +91,40 @@ class SCMPNewsCrawler(NewsCrawlerBase):
             for subcategory, feed_url in subcategories.items():
                 try:
                     logging.info(f"Parsing SCMP {category}/{subcategory} feed")
-                    feed = feedparser.parse(feed_url)
                     
-                    for entry in feed.entries:
+                    # Get the raw XML content
+                    response = requests.get(feed_url, headers=self.headers, timeout=10)
+                    response.raise_for_status()
+                    
+                    # Parse XML directly
+                    root = ET.fromstring(response.content)
+                    channel = root.find('channel')
+                    if channel is None:
+                        continue
+                        
+                    # Process each item in the feed
+                    for item in channel.findall('item'):
+                        description = self._get_element_text(item, 'description')
+                        
+                        # Skip articles with missing or empty description
+                        if not description or description.isspace():
+                            continue
+                            
+                        # Clean description by removing newlines and multiple spaces
+                        description = ' '.join(description.split())
+                        
                         article = {
                             'source': 'SCMP',
                             'category': category,
                             'subcategory': subcategory,
-                            'title': entry.get('title', ''),
-                            'link': entry.get('link', ''),
-                            'description': entry.get('description', ''),
-                            'pub_date': entry.get('published', ''),
-                            'author': entry.get('author', ''),
-                            'guid': entry.get('guid', ''),
+                            'title': self._get_element_text(item, 'title'),
+                            'link': self._get_element_text(item, 'link'),
+                            'description': description,
+                            'pub_date': self._get_element_text(item, 'pubDate'),
+                            'author': self._get_element_text(item, 'author'),
+                            'guid': self._get_element_text(item, 'guid'),
+                            'full_content': description,  # Using description as content
                         }
-                        
-                        # Extract media content if available
-                        if 'media_content' in entry:
-                            media = entry.get('media_content', [{}])[0]
-                            article.update({
-                                'media_url': media.get('url', ''),
-                                'media_type': media.get('type', ''),
-                                'media_width': media.get('width', ''),
-                                'media_height': media.get('height', '')
-                            })
                         
                         # Clean and format the published date
                         try:
@@ -128,14 +138,19 @@ class SCMPNewsCrawler(NewsCrawlerBase):
                             logging.warning(f"Date parsing error: {str(e)}")
                             article['pub_date_formatted'] = article['pub_date']
                         
-                        # Extract detailed content if link is available
-                        if article['link']:
-                            logging.info(f"Extracting content from {article['link']}")
-                            detailed_content = self.extract_article_content(article['link'])
-                            article.update(detailed_content)
+                        # Extract media content if available
+                        media_content = item.find('{http://search.yahoo.com/mrss/}content')
+                        if media_content is not None:
+                            article.update({
+                                'media_url': media_content.get('url', ''),
+                                'media_type': media_content.get('type', ''),
+                                'media_width': media_content.get('width', ''),
+                                'media_height': media_content.get('height', '')
+                            })
                         
                         all_articles.append(article)
-                        time.sleep(1)  # Polite delay between requests
+                    
+                    time.sleep(2)  # Polite delay between feed requests
                         
                 except Exception as e:
                     logging.error(f"Error parsing SCMP {category}/{subcategory} feed: {str(e)}")
@@ -143,26 +158,17 @@ class SCMPNewsCrawler(NewsCrawlerBase):
                 
         return all_articles
 
+    def _get_element_text(self, item, tag):
+        """Helper method to safely get element text"""
+        element = item.find(tag)
+        return element.text if element is not None else ''
+
     def extract_article_content(self, url):
-        """Extract SCMP article content"""
-        try:
-            response = requests.get(url, headers=self.headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            content = ''
-            content_div = soup.find('div', class_='article-body')
-            if content_div:
-                paragraphs = content_div.find_all('p')
-                content = ' '.join([p.get_text().strip() for p in paragraphs])
-            
-            return {
-                'full_content': content
-            }
-            
-        except Exception as e:
-            logging.error(f"Error extracting SCMP content from {url}: {str(e)}")
-            return {'full_content': ''}
+        """
+        Minimal implementation to satisfy abstract base class.
+        We're not using this since we get content directly from RSS feed.
+        """
+        return {'full_content': ''}
 
 class HKFPCrawler(NewsCrawlerBase):
     """Hong Kong Free Press crawler"""
@@ -331,15 +337,15 @@ def main():
         scmp_articles = scmp_crawler.parse_feed()
         articles_by_source['SCMP'].extend(scmp_articles)
         
-        # Crawl HKFP
-        hkfp_crawler = HKFPCrawler()
-        hkfp_articles = hkfp_crawler.parse_feed()
-        articles_by_source['HKFP'].extend(hkfp_articles)
+        # # Crawl HKFP
+        # hkfp_crawler = HKFPCrawler()
+        # hkfp_articles = hkfp_crawler.parse_feed()
+        # articles_by_source['HKFP'].extend(hkfp_articles)
         
-        # Crawl RTHK
-        rthk_crawler = RTHKCrawler()
-        rthk_articles = rthk_crawler.parse_feed()
-        articles_by_source['RTHK'].extend(rthk_articles)
+        # # Crawl RTHK
+        # rthk_crawler = RTHKCrawler()
+        # rthk_articles = rthk_crawler.parse_feed()
+        # articles_by_source['RTHK'].extend(rthk_articles)
         
         # Process and save each source separately
         dataframes = {}
@@ -347,6 +353,15 @@ def main():
             if articles:
                 # Create DataFrame
                 df = pd.DataFrame(articles)
+                
+                # Remove rows with missing values
+                df = df.dropna(subset=['title', 'description', 'full_content'])
+                
+                # Clean all text columns by removing newlines and multiple spaces
+                text_columns = ['title', 'description', 'full_content', 'author']
+                for col in text_columns:
+                    if col in df.columns:
+                        df[col] = df[col].astype(str).str.split().str.join(' ')
                 
                 # Filter for English content
                 def is_english(text):
