@@ -381,27 +381,33 @@ class RTHKCrawler(NewsCrawlerBase):
         """
         return {'full_content': ''}
 
-class HKETCrawler(NewsCrawlerBase):
-    """Hong Kong Economic Times crawler"""
+class NewsGovHKCrawler(NewsCrawlerBase):
+    """Hong Kong Government News Crawler"""
     def __init__(self):
         super().__init__()
         self.feed_categories = {
-            'hongkong': 'https://www.hket.com/rss/hongkong',
-            'lifestyle': 'https://www.hket.com/rss/lifestyle',
-            'finance': 'https://www.hket.com/rss/finance',
-            'china': 'https://www.hket.com/rss/china',
-            'world': 'https://www.hket.com/rss/world',
-            'technology': 'https://www.hket.com/rss/technology',
-            'entertainment': 'https://www.hket.com/rss/entertainment'
+            'school_work': 'https://www.news.gov.hk/en/categories/school_work/html/articlelist.rss.xml',
+            'environment': 'https://www.news.gov.hk/en/categories/environment/html/articlelist.rss.xml',
+            'infrastructure': 'https://www.news.gov.hk/en/categories/infrastructure/html/articlelist.rss.xml',
+            'city_life': 'https://www.news.gov.hk/en/city_life/html/articlelist.rss.xml',
+            'budget': 'https://www.news.gov.hk/en/categories/25-26budget/html/articlelist.rss.xml',
+            'clarification': 'https://www.news.gov.hk/en/categories/clarification/html/articlelist.rss.xml',
+            'ticker': 'https://www.news.gov.hk/en/common/html/ticker.rss.xml',
+            'finance': 'https://www.news.gov.hk/en/categories/finance/html/articlelist.rss.xml',
+            'health': 'https://www.news.gov.hk/en/categories/health/html/articlelist.rss.xml',
+            'law_order': 'https://www.news.gov.hk/en/categories/law_order/html/articlelist.rss.xml',
+            'admin': 'https://www.news.gov.hk/en/categories/admin/html/articlelist.rss.xml',
+            'record': 'https://www.news.gov.hk/en/record/html/articlelist.rss.xml',
+            'national_security': 'https://www.news.gov.hk/en/categories/nationalsecurity/html/articlelist.rss.xml'
         }
 
     def parse_feed(self):
-        """Parse HKET RSS feeds"""
+        """Parse news.gov.hk RSS feeds"""
         all_articles = []
         
         for category, feed_url in self.feed_categories.items():
             try:
-                logging.info(f"Parsing HKET {category} feed")
+                logging.info(f"Parsing news.gov.hk {category} feed")
                 
                 # Get the raw XML content
                 response = requests.get(feed_url, headers=self.headers, timeout=10)
@@ -416,31 +422,29 @@ class HKETCrawler(NewsCrawlerBase):
                 # Process each item in the feed
                 for item in channel.findall('item'):
                     try:
-                        # Get title and clean it
+                        # Get title and link from the item
                         title = self._get_element_text(item, 'title')
-                        if not title:
-                            continue
-                            
-                        # Get description and clean it
+                        link = self._get_element_text(item, 'link')
                         description = self._get_element_text(item, 'description')
-                        if not description or description.isspace():
+                        pub_date = self._get_element_text(item, 'pubDate')
+                        
+                        if not title or not link:
                             continue
-                            
-                        # Clean text by removing newlines and multiple spaces
-                        description = ' '.join(description.split())
+                        
+                        # Get full article content
+                        article_content = self.extract_article_content(link)
                         
                         article = {
-                            'source': 'HKET',
+                            'source': 'news.gov.hk',
                             'category': category,
                             'title': title,
-                            'link': self._get_element_text(item, 'link'),
+                            'link': link,
                             'description': description,
-                            'pub_date': self._get_element_text(item, 'pubDate'),
-                            'full_content': description,  # Using description as content
-                            'guid': self._get_element_text(item, 'guid')
+                            'pub_date': pub_date,
+                            'full_content': article_content.get('full_content', '')
                         }
                         
-                        # Clean and format the published date
+                        # Format the date if available
                         try:
                             if article['pub_date']:
                                 parsed_date = datetime.strptime(
@@ -452,21 +456,15 @@ class HKETCrawler(NewsCrawlerBase):
                             logging.warning(f"Date parsing error: {str(e)}")
                             article['pub_date_formatted'] = article['pub_date']
                         
-                        # Get media content if available
-                        media_content = item.find('{http://search.yahoo.com/mrss/}content')
-                        if media_content is not None:
-                            article['media_url'] = media_content.get('url', '')
-                        
                         all_articles.append(article)
+                        time.sleep(2)  # Polite delay between requests
                         
                     except Exception as e:
-                        logging.error(f"Error parsing article: {str(e)}")
+                        logging.error(f"Error processing article: {str(e)}")
                         continue
-                
-                time.sleep(2)  # Polite delay between feed requests
                     
             except Exception as e:
-                logging.error(f"Error parsing HKET {category} feed: {str(e)}")
+                logging.error(f"Error parsing news.gov.hk {category} feed: {str(e)}")
                 continue
             
         return all_articles
@@ -477,11 +475,22 @@ class HKETCrawler(NewsCrawlerBase):
         return element.text if element is not None else ''
 
     def extract_article_content(self, url):
-        """
-        Minimal implementation to satisfy abstract base class.
-        We're not using this since we get content directly from RSS feed.
-        """
-        return {'full_content': ''}
+        """Extract content from individual news.gov.hk article pages"""
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                # Find all paragraph tags and their content
+                root = ET.fromstring(response.content, parser=ET.HTMLParser())
+                paragraphs = root.findall('.//p')
+                
+                # Combine all paragraph texts
+                content = ' '.join(p.text.strip() for p in paragraphs if p.text and p.text.strip())
+                return {'full_content': content}
+            
+            return {'full_content': ''}
+        except Exception as e:
+            logging.error(f"Error extracting content from {url}: {str(e)}")
+            return {'full_content': ''}
 
 def main():
     try:
@@ -489,7 +498,7 @@ def main():
             'SCMP': [],
             'HKFP': [],
             'RTHK': [],
-            'HKET': [],
+            'NewsGovHK': [],
         }
         
         # Create output directory
@@ -497,25 +506,25 @@ def main():
         os.makedirs(output_dir, exist_ok=True)
         logging.info(f"Created output directory at: {output_dir}")
         
-        # Crawl SCMP
-        scmp_crawler = SCMPNewsCrawler()
-        scmp_articles = scmp_crawler.parse_feed()
-        articles_by_source['SCMP'].extend(scmp_articles)
+        # # Crawl SCMP
+        # scmp_crawler = SCMPNewsCrawler()
+        # scmp_articles = scmp_crawler.parse_feed()
+        # articles_by_source['SCMP'].extend(scmp_articles)
         
-        # Crawl HKFP
-        hkfp_crawler = HKFPCrawler()
-        hkfp_articles = hkfp_crawler.parse_feed()
-        articles_by_source['HKFP'].extend(hkfp_articles)
+        # # Crawl HKFP
+        # hkfp_crawler = HKFPCrawler()
+        # hkfp_articles = hkfp_crawler.parse_feed()
+        # articles_by_source['HKFP'].extend(hkfp_articles)
         
-        # Crawl RTHK
-        rthk_crawler = RTHKCrawler()
-        rthk_articles = rthk_crawler.parse_feed()
-        articles_by_source['RTHK'].extend(rthk_articles)
+        # # Crawl RTHK
+        # rthk_crawler = RTHKCrawler()
+        # rthk_articles = rthk_crawler.parse_feed()
+        # articles_by_source['RTHK'].extend(rthk_articles)
         
-        # Crawl HKET
-        hket_crawler = HKETCrawler()
-        hket_articles = hket_crawler.parse_feed()
-        articles_by_source['HKET'].extend(hket_articles)
+        # Crawl NewsGovHK
+        news_gov_hk_crawler = NewsGovHKCrawler()
+        news_gov_hk_articles = news_gov_hk_crawler.parse_feed()
+        articles_by_source['NewsGovHK'].extend(news_gov_hk_articles)
         
         # Process and save each source separately
         dataframes = {}
