@@ -184,103 +184,103 @@ class HKFPCrawler(NewsCrawlerBase):
             # Get the main page
             response = requests.get(self.base_url, headers=self.headers, timeout=10)
             response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Find all article elements with data-post-id
-            article_elements = soup.find_all('article', attrs={'data-post-id': True})
+            # Print first part of response to debug
+            print("Response text sample:", response.text[:1000])
             
-            for article_elem in article_elements:
+            # Find all article links
+            # Pattern matches URLs like: /2025/04/06/article-title
+            link_pattern = r'href="(https://hongkongfp\.com/\d{4}/\d{2}/\d{2}/[^"]+)"[^>]*>([^<]+)</a>'
+            article_links = re.findall(link_pattern, response.text)
+            
+            print(f"Found {len(article_links)} article links")
+            
+            for url, title in article_links:
                 try:
-                    # Get article ID and link
-                    article_id = article_elem.get('data-post-id')
-                    link_elem = article_elem.find('a', attrs={'rel': 'bookmark'})
-                    
-                    if not link_elem or not article_id:
-                        continue
-                        
-                    article_url = link_elem.get('href')
-                    if not article_url:
-                        continue
+                    print(f"Processing URL: {url}")
+                    print(f"Title: {title}")
                     
                     # Get article content
-                    article_content = self.extract_article_content(article_url)
-                    if not article_content:
-                        continue
+                    article_content = self.extract_article_content(url)
                     
-                    # Get basic article info from the main page
-                    title_elem = article_elem.find('h2', class_='entry-title')
-                    date_elem = article_elem.find('time', class_='entry-date')
-                    
-                    article = {
-                        'source': 'HKFP',
-                        'article_id': article_id,
-                        'title': title_elem.get_text().strip() if title_elem else '',
-                        'link': article_url,
-                        'pub_date': date_elem.get('datetime') if date_elem else '',
-                    }
-                    
-                    # Update with detailed content
-                    article.update(article_content)
-                    
-                    # Clean and format the published date
-                    try:
+                    if article_content:
+                        article = {
+                            'source': 'HKFP',
+                            'title': title.strip(),
+                            'link': url,
+                            'pub_date': article_content.get('pub_date', ''),
+                            'full_content': article_content.get('full_content', ''),
+                            'author': article_content.get('author', '')
+                        }
+                        
+                        # Format the date if available
                         if article['pub_date']:
-                            parsed_date = datetime.fromisoformat(article['pub_date'].replace('Z', '+00:00'))
-                            article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
-                    except Exception as e:
-                        logging.warning(f"Date parsing error: {str(e)}")
-                        article['pub_date_formatted'] = article['pub_date']
-                    
-                    all_articles.append(article)
-                    time.sleep(2)  # Polite delay between article requests
-                    
+                            try:
+                                # HKFP date format: "08:48, 6 April 2025"
+                                date_str = article['pub_date'].split(', ')[1]
+                                parsed_date = datetime.strptime(date_str, '%d %B %Y')
+                                article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d')
+                            except Exception as e:
+                                logging.warning(f"Date parsing error: {str(e)}")
+                                article['pub_date_formatted'] = article['pub_date']
+                        
+                        all_articles.append(article)
+                        logging.info(f"Processed article: {title}")
+                        
+                        time.sleep(2)  # Polite delay between requests
+                        
                 except Exception as e:
-                    logging.error(f"Error processing article element: {str(e)}")
+                    logging.error(f"Error processing article {url}: {str(e)}")
                     continue
-            
-            return all_articles
-            
+                
         except Exception as e:
             logging.error(f"Error parsing HKFP feed: {str(e)}")
-            return []
+            
+        return all_articles
 
     def extract_article_content(self, url):
-        """Extract content from individual HKFP article pages"""
+        """Extract content from HKFP article pages"""
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
             response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
             
-            content = ''
-            description = ''
-            author = ''
+            # Clean the HTML content
+            cleaned_text = re.sub(r'<script.*?</script>', '', response.text, flags=re.DOTALL)
+            cleaned_text = re.sub(r'<style.*?</style>', '', cleaned_text, flags=re.DOTALL)
             
-            # Get article content
-            content_div = soup.find('div', class_='entry-content')
-            if content_div:
-                # Get all paragraphs but exclude certain classes
-                paragraphs = content_div.find_all('p', class_=lambda x: x is None or 'support' not in x)
-                content = ' '.join(p.get_text().strip() for p in paragraphs)
+            # Extract author
+            author_pattern = r'by\s+([^<]+)<'
+            author_match = re.search(author_pattern, cleaned_text)
+            author = author_match.group(1).strip() if author_match else ''
             
-            # Get article description/excerpt
-            excerpt = soup.find('div', class_='entry-excerpt')
-            if excerpt:
-                description = excerpt.get_text().strip()
+            # Extract date
+            date_pattern = r'(\d{2}:\d{2},\s+\d+\s+[A-Za-z]+\s+\d{4})'
+            date_match = re.search(date_pattern, cleaned_text)
+            pub_date = date_match.group(1) if date_match else ''
             
-            # Get author
-            author_elem = soup.find('a', class_='url fn n')
-            if author_elem:
-                author = author_elem.get_text().strip()
+            # Extract article content
+            # Find the main article content div
+            content_pattern = r'<div class="entry-content[^"]*">(.*?)</div>'
+            content_match = re.search(content_pattern, cleaned_text, re.DOTALL)
             
-            return {
-                'description': description,
-                'full_content': content,
-                'author': author
-            }
+            if content_match:
+                content_html = content_match.group(1)
+                # Extract paragraphs
+                paragraphs = re.findall(r'<p>(.*?)</p>', content_html)
+                # Clean and join paragraphs
+                content = ' '.join(p.strip() for p in paragraphs if p.strip())
+                
+                return {
+                    'full_content': content,
+                    'pub_date': pub_date,
+                    'author': author
+                }
+            
+            return {'full_content': '', 'pub_date': '', 'author': ''}
             
         except Exception as e:
-            logging.error(f"Error extracting HKFP content from {url}: {str(e)}")
-            return {}
+            logging.error(f"Error extracting content from {url}: {str(e)}")
+            return {'full_content': '', 'pub_date': '', 'author': ''}
 
 class RTHKCrawler(NewsCrawlerBase):
     """RTHK English news crawler"""
@@ -381,7 +381,6 @@ class RTHKCrawler(NewsCrawlerBase):
         """
         return {'full_content': ''}
 
-class NewsGovHKCrawler(NewsCrawlerBase):
     """Hong Kong Government News Crawler"""
     def __init__(self):
         super().__init__()
@@ -492,54 +491,200 @@ class NewsGovHKCrawler(NewsCrawlerBase):
             logging.error(f"Error extracting content from {url}: {str(e)}")
             return {'full_content': ''}
 
+    """The Standard news crawler implementation"""
+    def __init__(self):
+        super().__init__()
+        self.base_url = 'https://www.thestandard.com.hk'
+        self.section_url = 'https://www.thestandard.com.hk/section-news-list/section/top-news/'
+
+    def parse_feed(self):
+        """Parse The Standard news articles"""
+        all_articles = []
+        
+        try:
+            # Get the section page content
+            response = requests.get(self.section_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            
+            # Find the content within class="list"
+            list_pattern = r'<div class="list">(.*?)</div>'
+            list_content = re.search(list_pattern, response.text, re.DOTALL)
+            
+            if list_content:
+                list_html = list_content.group(1)
+                print("Found list content:", list_html[:500])  # Print first 500 chars
+                
+                # Find all caption divs within the list content
+                caption_pattern = r'<div class="caption">(.*?)</div>'
+                captions = re.findall(caption_pattern, list_html, re.DOTALL)
+                
+                print(f"Found {len(captions)} captions")
+                
+                # Process each caption
+                for caption in captions:
+                    # Find the link within the caption
+                    link_match = re.search(r'<a href="([^"]*)"[^>]*>([^<]+)</a>', caption)
+                    if link_match:
+                        url = link_match.group(1)
+                        title = link_match.group(2)
+                        
+                        print(f"Found link in caption:")
+                        print(f"URL: {url}")
+                        print(f"Title: {title}")
+                        
+                        try:
+                            # Make sure we have a full URL
+                            if not url.startswith('http'):
+                                url = urljoin(self.base_url, url)
+                            
+                            # Only process if it's an editorial article (section/17/)
+                            if 'section-news/section/17/' in url:
+                                print(f"Processing editorial URL: {url}")
+                                
+                                # Get article content
+                                article_content = self.extract_article_content(url)
+                                
+                                if article_content:
+                                    article = {
+                                        'source': 'The Standard',
+                                        'category': 'Editorial',
+                                        'title': title.strip(),
+                                        'link': url,
+                                        'pub_date': article_content.get('pub_date', ''),
+                                        'full_content': article_content.get('full_content', ''),
+                                    }
+                                    
+                                    # Format the date if available
+                                    if article['pub_date']:
+                                        try:
+                                            parsed_date = datetime.strptime(article['pub_date'], '%d %b %Y')
+                                            article['pub_date_formatted'] = parsed_date.strftime('%Y-%m-%d')
+                                        except Exception as e:
+                                            logging.warning(f"Date parsing error: {str(e)}")
+                                            article['pub_date_formatted'] = article['pub_date']
+                                    
+                                    all_articles.append(article)
+                                    logging.info(f"Processed article: {title}")
+                                    
+                                    time.sleep(2)  # Polite delay between requests
+                                
+                        except Exception as e:
+                            logging.error(f"Error processing article {url}: {str(e)}")
+                            continue
+            else:
+                print("No list content found")
+                print("Page content sample:", response.text[:1000])
+                
+        except Exception as e:
+            logging.error(f"Error parsing The Standard articles: {str(e)}")
+            
+        return all_articles
+
+    def extract_article_content(self, url):
+        """Extract content from The Standard article pages"""
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            
+            # Extract date using regex
+            date_pattern = r'Editorial \| Editorial (\d+ [A-Za-z]+ \d{4})'
+            date_match = re.search(date_pattern, response.text)
+            pub_date = date_match.group(1) if date_match else ''
+            
+            # Extract paragraphs after removing script and style tags
+            # First remove script and style content
+            cleaned_text = re.sub(r'<script.*?</script>', '', response.text, flags=re.DOTALL)
+            cleaned_text = re.sub(r'<style.*?</style>', '', cleaned_text, flags=re.DOTALL)
+            
+            # Then extract paragraphs
+            paragraphs = re.findall(r'<p>(.*?)</p>', cleaned_text)
+            
+            # Filter out empty paragraphs and navigation text
+            content_paragraphs = []
+            for p in paragraphs:
+                p = p.strip()
+                if p and not any(skip in p for skip in ['More>>', 'The Standard Channel']):
+                    content_paragraphs.append(p)
+            
+            # Join all valid paragraphs with spaces
+            content = ' '.join(content_paragraphs)
+            
+            return {
+                'full_content': content,
+                'pub_date': pub_date
+            }
+            
+        except Exception as e:
+            logging.error(f"Error extracting content from {url}: {str(e)}")
+            return {'full_content': '', 'pub_date': ''}
+
 def main():
     try:
-        articles_by_source = {
-            'SCMP': [],
-            'HKFP': [],
-            'RTHK': [],
-            'NewsGovHK': [],
-        }
-        
         # Create output directory
         output_dir = os.path.abspath('hk_news')
         os.makedirs(output_dir, exist_ok=True)
         logging.info(f"Created output directory at: {output_dir}")
         
-        # # Crawl SCMP
-        # scmp_crawler = SCMPNewsCrawler()
-        # scmp_articles = scmp_crawler.parse_feed()
-        # articles_by_source['SCMP'].extend(scmp_articles)
+        # Dictionary to store existing articles by source
+        existing_articles = {
+            'SCMP': set(),
+            'HKFP': set(),
+            'RTHK': set(),
+        }
         
-        # # Crawl HKFP
-        # hkfp_crawler = HKFPCrawler()
-        # hkfp_articles = hkfp_crawler.parse_feed()
-        # articles_by_source['HKFP'].extend(hkfp_articles)
+        # Load existing articles from CSV files
+        for source in existing_articles.keys():
+            filename = os.path.join(output_dir, f'{source.lower()}_news.csv')
+            if os.path.exists(filename):
+                df = pd.read_csv(filename)
+                # Store URLs of existing articles
+                existing_articles[source] = set(df['link'].tolist())
+                logging.info(f"Loaded {len(existing_articles[source])} existing {source} articles")
         
-        # # Crawl RTHK
-        # rthk_crawler = RTHKCrawler()
-        # rthk_articles = rthk_crawler.parse_feed()
-        # articles_by_source['RTHK'].extend(rthk_articles)
+        # Dictionary to store new articles
+        new_articles_by_source = {
+            'SCMP': [],
+            'HKFP': [],
+            'RTHK': [],
+        }
         
-        # Crawl NewsGovHK
-        news_gov_hk_crawler = NewsGovHKCrawler()
-        news_gov_hk_articles = news_gov_hk_crawler.parse_feed()
-        articles_by_source['NewsGovHK'].extend(news_gov_hk_articles)
+        # Crawl SCMP
+        scmp_crawler = SCMPNewsCrawler()
+        scmp_articles = scmp_crawler.parse_feed()
+        for article in scmp_articles:
+            if article['link'] not in existing_articles['SCMP']:
+                new_articles_by_source['SCMP'].append(article)
         
-        # Process and save each source separately
+        # Crawl HKFP
+        hkfp_crawler = HKFPCrawler()
+        hkfp_articles = hkfp_crawler.parse_feed()
+        for article in hkfp_articles:
+            if article['link'] not in existing_articles['HKFP']:
+                new_articles_by_source['HKFP'].append(article)
+        
+        # Crawl RTHK
+        rthk_crawler = RTHKCrawler()
+        rthk_articles = rthk_crawler.parse_feed()
+        for article in rthk_articles:
+            if article['link'] not in existing_articles['RTHK']:
+                new_articles_by_source['RTHK'].append(article)
+        
+        # Process and update each source separately
         dataframes = {}
-        for source, articles in articles_by_source.items():
-            if articles:
-                # Create DataFrame
-                df = pd.DataFrame(articles)
-                
+        for source, new_articles in new_articles_by_source.items():
+            filename = os.path.join(output_dir, f'{source.lower()}_news.csv')
             
+            if new_articles:
+                logging.info(f"Found {len(new_articles)} new {source} articles")
                 
-                # Clean all text columns by removing newlines and multiple spaces
+                # Create DataFrame for new articles
+                new_df = pd.DataFrame(new_articles)
+                
+                # Clean text columns
                 text_columns = ['title', 'description', 'full_content', 'author']
                 for col in text_columns:
-                    if col in df.columns:
-                        df[col] = df[col].astype(str).str.split().str.join(' ')
+                    if col in new_df.columns:
+                        new_df[col] = new_df[col].astype(str).str.split().str.join(' ')
                 
                 # Filter for English content
                 def is_english(text):
@@ -547,18 +692,28 @@ def main():
                         return False
                     return len([c for c in text if ord(c) < 128]) / len(text) > 0.7
                 
-                df = df[df['full_content'].apply(is_english)]
+                new_df = new_df[new_df['full_content'].apply(is_english)]
                 
-                # Save to source-specific file in hk_news directory
-                filename = os.path.join(output_dir, f'{source.lower()}_news.csv')
-                df.to_csv(filename, index=False, encoding='utf-8-sig')
-                logging.info(f"Saved {len(df)} articles to {filename}")
-                
-                # Store DataFrame in dictionary
-                dataframes[source] = df
+                # If file exists, append new articles
+                if os.path.exists(filename):
+                    existing_df = pd.read_csv(filename)
+                    combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+                    # Remove duplicates based on link
+                    combined_df = combined_df.drop_duplicates(subset='link', keep='first')
+                    combined_df.to_csv(filename, index=False, encoding='utf-8-sig')
+                    dataframes[source] = combined_df
+                    logging.info(f"Updated {filename} with {len(new_df)} new articles")
+                else:
+                    # Create new file if it doesn't exist
+                    new_df.to_csv(filename, index=False, encoding='utf-8-sig')
+                    dataframes[source] = new_df
+                    logging.info(f"Created {filename} with {len(new_df)} articles")
             else:
-                logging.warning(f"No articles found for {source}")
-                dataframes[source] = pd.DataFrame()
+                logging.info(f"No new articles found for {source}")
+                if os.path.exists(filename):
+                    dataframes[source] = pd.read_csv(filename)
+                else:
+                    dataframes[source] = pd.DataFrame()
         
         return dataframes
             
@@ -569,15 +724,16 @@ def main():
 if __name__ == "__main__":
     dataframes = main()
     
-    # Print summary of results with safer column selection
+    # Print summary of results
     for source, df in dataframes.items():
-        print(f"\n{source} articles found: {len(df)}")
+        print(f"\n{source} articles:")
+        print(f"Total articles: {len(df)}")
         if not df.empty:
-            print("\nFirst few articles:")
-            # Only show columns that exist in the DataFrame
-            display_columns = ['title']
-            if 'category' in df.columns:
-                display_columns.append('category')
+            print("\nMost recent articles:")
             if 'pub_date_formatted' in df.columns:
-                display_columns.append('pub_date_formatted')
-            print(df[display_columns].head())
+                df_sorted = df.sort_values('pub_date_formatted', ascending=False)
+                display_columns = ['title', 'pub_date_formatted']
+                print(df_sorted[display_columns].head())
+            else:
+                display_columns = ['title']
+                print(df[display_columns].head())
