@@ -412,19 +412,19 @@ def main():
             'RTHK': [],
         }
         
-        # # Crawl SCMP
-        # scmp_crawler = SCMPNewsCrawler()
-        # scmp_articles = scmp_crawler.parse_feed()
-        # for article in scmp_articles:
-        #     if article['link'] not in existing_articles['SCMP']:
-        #         new_articles_by_source['SCMP'].append(article)
+        # Crawl SCMP
+        scmp_crawler = SCMPNewsCrawler()
+        scmp_articles = scmp_crawler.parse_feed()
+        for article in scmp_articles:
+            if article['link'] not in existing_articles['SCMP']:
+                new_articles_by_source['SCMP'].append(article)
         
-        # # Crawl HKFP
-        # hkfp_crawler = HKFPCrawler()
-        # hkfp_articles = hkfp_crawler.parse_feed()
-        # for article in hkfp_articles:
-        #     if article['link'] not in existing_articles['HKFP']:
-        #         new_articles_by_source['HKFP'].append(article)
+        # Crawl HKFP
+        hkfp_crawler = HKFPCrawler()
+        hkfp_articles = hkfp_crawler.parse_feed()
+        for article in hkfp_articles:
+            if article['link'] not in existing_articles['HKFP']:
+                new_articles_by_source['HKFP'].append(article)
         
         # Crawl RTHK
         rthk_crawler = RTHKCrawler()
@@ -457,6 +457,15 @@ def main():
                     return len([c for c in text if ord(c) < 128]) / len(text) > 0.7
                 
                 new_df = new_df[new_df['full_content'].apply(is_english)]
+                
+                # Add a category column for HKFP if not present
+                if source == 'HKFP':
+                    new_df['category'] = 'HKFP'  # Set a default category for HKFP articles
+                
+                # Sort by publication date and then by category
+                if 'pub_date_formatted' in new_df.columns:
+                    new_df['pub_date_formatted'] = pd.to_datetime(new_df['pub_date_formatted'], errors='coerce')
+                    new_df = new_df.sort_values(by=['pub_date_formatted', 'category'], ascending=[False, True])
                 
                 # If file exists, append new articles
                 if os.path.exists(filename):
