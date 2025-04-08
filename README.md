@@ -1,8 +1,8 @@
 # stat8021-project
 
 news articles inside folder `hk_news`:
-- SCMP (528 articles)
-- HKFP (61 articles)
-- RTHK (133 articles)
+- SCMP (648 articles)
+- HKFP (69 articles)
+- RTHK (168 articles)
 
 last update: 20250407 23:33

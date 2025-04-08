@@ -462,22 +462,30 @@ def main():
                 if source == 'HKFP':
                     new_df['category'] = 'HKFP'  # Set a default category for HKFP articles
                 
-                # Sort by publication date and then by category
-                if 'pub_date_formatted' in new_df.columns:
-                    new_df['pub_date_formatted'] = pd.to_datetime(new_df['pub_date_formatted'], errors='coerce')
-                    new_df = new_df.sort_values(by=['pub_date_formatted', 'category'], ascending=[False, True])
-                
                 # If file exists, append new articles
                 if os.path.exists(filename):
                     existing_df = pd.read_csv(filename)
                     combined_df = pd.concat([existing_df, new_df], ignore_index=True)
                     # Remove duplicates based on link
                     combined_df = combined_df.drop_duplicates(subset='link', keep='first')
+                    
+                    # Convert pub_date_formatted to datetime for both new and existing data
+                    if 'pub_date_formatted' in combined_df.columns:
+                        combined_df['pub_date_formatted'] = pd.to_datetime(combined_df['pub_date_formatted'], errors='coerce')
+                        # Sort by date (descending) and category
+                        combined_df = combined_df.sort_values(by=['pub_date_formatted', 'category'], 
+                                                            ascending=[False, True])
+                    
                     combined_df.to_csv(filename, index=False, encoding='utf-8-sig')
                     dataframes[source] = combined_df
                     logging.info(f"Updated {filename} with {len(new_df)} new articles")
                 else:
                     # Create new file if it doesn't exist
+                    if 'pub_date_formatted' in new_df.columns:
+                        new_df['pub_date_formatted'] = pd.to_datetime(new_df['pub_date_formatted'], errors='coerce')
+                        new_df = new_df.sort_values(by=['pub_date_formatted', 'category'], 
+                                                  ascending=[False, True])
+                    
                     new_df.to_csv(filename, index=False, encoding='utf-8-sig')
                     dataframes[source] = new_df
                     logging.info(f"Created {filename} with {len(new_df)} articles")
@@ -501,12 +509,12 @@ if __name__ == "__main__":
     for source, df in dataframes.items():
         print(f"\n{source} articles:")
         print(f"Total articles: {len(df)}")
-        if not df.empty:
-            print("\nMost recent articles:")
-            if 'pub_date_formatted' in df.columns:
-                df_sorted = df.sort_values('pub_date_formatted', ascending=False)
-                display_columns = ['title', 'pub_date_formatted']
-                print(df_sorted[display_columns].head())
-            else:
-                display_columns = ['title']
-                print(df[display_columns].head())
+        # if not df.empty:
+        #     print("\nMost recent articles:")
+        #     if 'pub_date_formatted' in df.columns:
+        #         df_sorted = df.sort_values(by = ['pub_date_formatted'])
+        #         display_columns = ['title', 'pub_date_formatted']
+        #         print(df[display_columns].head())
+        #     else:
+        #         display_columns = ['title']
+        #         print(df[display_columns].head())
