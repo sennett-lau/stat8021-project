@@ -5,4 +5,4 @@ news articles inside folder `hk_news`:
 - HKFP (69 articles)
 - RTHK (168 articles)
 
-last update: 20250407 23:33
+last update: 20250408 23:36
