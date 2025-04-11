@@ -502,6 +502,63 @@ def main():
         logging.error(f"Main execution error: {str(e)}")
         return {}
 
+def update_scmp_content():
+    """Update SCMP articles with full paragraph content"""
+    try:
+        # Read the existing SCMP CSV file
+        csv_path = os.path.join('hk_news', 'scmp_news.csv')
+        df = pd.read_csv(csv_path)
+        
+        # Add new column for full paragraphs if it doesn't exist
+        if 'full_paragraphs' not in df.columns:
+            df['full_paragraphs'] = ''
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # Iterate through each article
+        for idx, row in df.iterrows():
+            try:
+                if pd.isna(df.at[idx, 'full_paragraphs']) or df.at[idx, 'full_paragraphs'] == '':
+                    url = row['link']
+                    logging.info(f"Fetching content from: {url}")
+                    
+                    # Make request to article URL
+                    response = requests.get(url, headers=headers, timeout=10)
+                    response.raise_for_status()
+                    
+                    # Parse HTML content
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Find all paragraphs with data-type="p"
+                    paragraphs = soup.find_all('p', attrs={'data-type': 'p'})
+                    
+                    # Join all paragraphs with newlines
+                    full_content = '\n'.join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
+                    
+                    # Update the DataFrame
+                    df.at[idx, 'full_paragraphs'] = full_content
+                    
+                    # Save after each successful update
+                    df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+                    
+                    logging.info(f"Updated content for article {idx + 1}/{len(df)}")
+                    
+                    # Polite delay between requests
+                    time.sleep(2)
+                
+            except Exception as e:
+                logging.error(f"Error processing article {row['link']}: {str(e)}")
+                continue
+        
+        # Final save
+        df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+        logging.info("Completed updating SCMP articles with full content")
+        
+    except Exception as e:
+        logging.error(f"Error updating SCMP content: {str(e)}")
+
 if __name__ == "__main__":
     dataframes = main()
     
@@ -518,3 +575,6 @@ if __name__ == "__main__":
         #     else:
         #         display_columns = ['title']
         #         print(df[display_columns].head())
+
+    # Add this line after your existing main() call
+    # update_scmp_content()
