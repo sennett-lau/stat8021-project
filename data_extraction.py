@@ -531,19 +531,47 @@ def update_scmp_content():
                     # Parse HTML content
                     soup = BeautifulSoup(response.text, 'html.parser')
                     
-                    # Find all paragraphs with data-type="p"
-                    paragraphs = soup.find_all('p', attrs={'data-type': 'p'})
-                    print(paragraphs)
+                    # Try different selectors to find paragraphs
+                    paragraphs = []
+                    
+                    # Method 1: Try finding article content div first
+                    article_content = soup.find('div', class_='article-content')
+                    if article_content:
+                        paragraphs = article_content.find_all('p')
+                    
+                    # Method 2: Try finding paragraphs with specific classes
+                    if not paragraphs:
+                        paragraphs = soup.find_all('p', class_=['article-paragraph', 'content'])
+                    
+                    # Method 3: Try finding all paragraphs within main content area
+                    if not paragraphs:
+                        main_content = soup.find('div', class_=['main-content', 'article-body'])
+                        if main_content:
+                            paragraphs = main_content.find_all('p')
+                    
+                    # Method 4: Last resort - get all paragraphs
+                    if not paragraphs:
+                        paragraphs = soup.find_all('p')
+                    
+                    # Print debug information
+                    print(f"URL: {url}")
+                    print(f"Number of paragraphs found: {len(paragraphs)}")
+                    if paragraphs:
+                        print("First paragraph sample:", paragraphs[0].get_text().strip())
+                    
                     # Join all paragraphs with newlines
                     full_content = '\n'.join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
                     
-                    # Update the DataFrame
-                    df.at[idx, 'full_paragraphs'] = full_content
-                    
-                    # Save after each successful update
-                    df.to_csv(csv_path, index=False, encoding='utf-8-sig')
-                    
-                    logging.info(f"Updated content for article {idx + 1}/{len(df)}")
+                    if full_content:
+                        # Update the DataFrame
+                        df.at[idx, 'full_paragraphs'] = full_content
+                        
+                        # Save after each successful update
+                        df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+                        
+                        logging.info(f"Updated content for article {idx + 1}/{len(df)}")
+                    else:
+                        logging.warning(f"No content found for article: {url}")
                     
                     # Polite delay between requests
                     time.sleep(2)
