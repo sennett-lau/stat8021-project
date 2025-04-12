@@ -560,20 +560,14 @@ def update_scmp_content():
         logging.error(f"Error updating SCMP content: {str(e)}")
 
 if __name__ == "__main__":
+    # Print current time and date
+    current_time = datetime.now()
     dataframes = main()
-    
+    print(f"news articles inside folder `hk_news`:")
     # Print summary of results
     for source, df in dataframes.items():
-        print(f"\n{source} ({len(df)} articles)")
-        # if not df.empty:
-        #     print("\nMost recent articles:")
-        #     if 'pub_date_formatted' in df.columns:
-        #         df_sorted = df.sort_values(by = ['pub_date_formatted'])
-        #         display_columns = ['title', 'pub_date_formatted']
-        #         print(df[display_columns].head())
-        #     else:
-        #         display_columns = ['title']
-        #         print(df[display_columns].head())
+        print(f"- {source} ({len(df)} articles)")
 
-    # Add this line after your existing main() call
-    # update_scmp_content()
+    print(f"\nlast update: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+    update_scmp_content()
