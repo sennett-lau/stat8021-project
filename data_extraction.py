@@ -533,7 +533,7 @@ def update_scmp_content():
                     
                     # Find all paragraphs with data-type="p"
                     paragraphs = soup.find_all('p', attrs={'data-type': 'p'})
-                    
+                    print(paragraphs)
                     # Join all paragraphs with newlines
                     full_content = '\n'.join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
                     
@@ -564,8 +564,7 @@ if __name__ == "__main__":
     
     # Print summary of results
     for source, df in dataframes.items():
-        print(f"\n{source} articles:")
-        print(f"Total articles: {len(df)}")
+        print(f"\n{source} ({len(df)} articles)")
         # if not df.empty:
         #     print("\nMost recent articles:")
         #     if 'pub_date_formatted' in df.columns:
