@@ -591,9 +591,10 @@ if __name__ == "__main__":
     # Print current time and date
     current_time = datetime.now()
     dataframes = main()
+    update_scmp_content()
     print(f"news articles inside folder `hk_news` (last updated: {current_time.strftime('%Y-%m-%d %H:%M:%S')}):")
     # Print summary of results
     for source, df in dataframes.items():
         print(f"- {source} ({len(df)} articles)")
 
-    update_scmp_content()
+    
