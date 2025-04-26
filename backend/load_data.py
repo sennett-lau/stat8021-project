@@ -1,5 +1,5 @@
 import os
-from data_loader import load_csv_data
+from data_loader import load_csv_data, load_summaries_json
 import psycopg2
 from pgvector.psycopg2 import register_vector
 
@@ -73,20 +73,31 @@ if __name__ == "__main__":
         print("No CSV files found. Check the directory path.")
     
     # Try to load data
-    print("Attempting to load data...")
+    print("Attempting to load news article data...")
     try:
         load_csv_data()
-        print("Data loading attempt completed.")
+        print("News article data loading completed.")
     except Exception as e:
-        print(f"Error loading data: {str(e)}")
+        print(f"Error loading news article data: {str(e)}")
+    
+    # Try to load summaries
+    print("Attempting to load summaries data...")
+    try:
+        load_summaries_json()
+        print("Summaries data loading completed.")
+    except Exception as e:
+        print(f"Error loading summaries data: {str(e)}")
     
     # Check if data was loaded
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM news_articles")
-    count = cur.fetchone()[0]
+    articles_count = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM summaries")
+    summaries_count = cur.fetchone()[0]
     cur.close()
     conn.close()
     
-    print(f"Number of records in the database: {count}")
+    print(f"Number of news articles in the database: {articles_count}")
+    print(f"Number of summaries in the database: {summaries_count}")
     print("Data loading process completed.") 

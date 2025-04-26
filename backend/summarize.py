@@ -139,20 +139,31 @@ def save_summary_to_db(summary_data, article_ids):
         # Convert article IDs to array format
         article_ids_array = "{" + ",".join(str(id) for id in article_ids) + "}"
         
+        # Extract sentences from refs and convert to PostgreSQL array format
+        refs_sentences = []
+        if "refs" in summary_data and summary_data["refs"]:
+            for ref in summary_data["refs"]:
+                if isinstance(ref, dict) and "sentence" in ref:
+                    refs_sentences.append(ref["sentence"])
+        
+        # Format refs as PostgreSQL array
+        refs_array = "{" + ",".join(f'"{sentence}"' for sentence in refs_sentences) + "}"
+        
         # Create embedding for the summary text
         summary_text = summary_data["title"] + " " + summary_data["summary"]
         embedding = create_simple_embedding(summary_text)
         
         # Insert into database
         cur.execute("""
-            INSERT INTO summaries (title, tldr, summary, news_articles_ids, embedding)
-            VALUES (%s, %s, %s, %s, %s::vector)
+            INSERT INTO summaries (title, tldr, summary, news_articles_ids, refs, embedding)
+            VALUES (%s, %s, %s, %s, %s, %s::vector)
             RETURNING id
         """, (
             summary_data["title"],
             tldr_array,
             summary_data["summary"],
             article_ids_array,
+            refs_array,
             embedding
         ))
         

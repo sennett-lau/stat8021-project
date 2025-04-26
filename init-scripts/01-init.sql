@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS summaries (
     tldr TEXT[] NOT NULL,
     summary TEXT NOT NULL,
     news_articles_ids INTEGER[] NOT NULL,
+    refs TEXT[] NOT NULL,
     embedding vector(384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

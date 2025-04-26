@@ -7,6 +7,7 @@ from datetime import datetime
 import pandas as pd
 from app import get_db_connection
 import time
+import json
 
 # Global model variable to avoid reloading for each embedding
 _model = None
@@ -188,6 +189,91 @@ def import_csv_file(source_name, file_path, cursor):
     print(f"Completed import of {imported_count} records from {source_name}")
     return imported_count
 
+def check_summaries_exist():
+    """Check if there's already data in the summaries table"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM summaries")
+    count = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return count > 0
+
+def load_summaries_json():
+    """Load summaries from JSON file if no data exists in the summaries table"""
+    if check_summaries_exist():
+        print("Summaries already exist in the database. Skipping import.")
+        return
+    
+    print("No summaries found. Starting import process...")
+    
+    # Get the base directory for more reliable file paths
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(base_dir, 'hk_news', 'summaries.json')
+    
+    if not os.path.exists(json_path):
+        print(f"WARNING: Summaries file not found: {json_path}")
+        return
+    
+    # Read JSON file
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            summaries = json.load(f)
+    except Exception as e:
+        print(f"Error reading summaries JSON file: {str(e)}")
+        return
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    imported_count = 0
+    
+    for summary in summaries:
+        try:
+            title = summary.get('title', 'No title')
+            tldr = summary.get('tldr', [])
+            summary_text = summary.get('summary', 'No summary')
+            news_articles_ids = summary.get('news_articles_ids', [])
+            
+            # Extract just the sentences from refs and convert to a text array
+            # PostgreSQL expects TEXT[] for refs, not an array of dictionaries
+            refs_list = []
+            for ref in summary.get('refs', []):
+                # Extract the sentence value from each ref dict
+                if isinstance(ref, dict) and 'sentence' in ref:
+                    refs_list.append(ref['sentence'])
+                else:
+                    refs_list.append(str(ref))
+            
+            # Create embedding from summary text
+            embedding = create_simple_embedding(summary_text)
+            
+            # Insert into database
+            cur.execute("""
+                INSERT INTO summaries (title, tldr, summary, news_articles_ids, refs, embedding)
+                VALUES (%s, %s, %s, %s, %s, %s::vector)
+            """, (
+                title,
+                tldr,
+                summary_text,
+                news_articles_ids,
+                refs_list,  # Now this is a simple array of strings
+                embedding
+            ))
+            
+            imported_count += 1
+            
+        except Exception as e:
+            print(f"Error importing summary: {str(e)}")
+            continue
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    print(f"Import complete. Total summaries imported: {imported_count}")
+
 if __name__ == "__main__":
     # Can be run directly to load data
-    load_csv_data() 
+    load_csv_data()
+    load_summaries_json() 

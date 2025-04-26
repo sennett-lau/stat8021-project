@@ -1,0 +1,77 @@
+[
+  {
+      "refs": [
+          {"id": 12, "sentence": "Stanford University researchers have unveiled a quantum computer chip that dramatically improves processing speed and efficiency."},
+          {"id": 3, "sentence": "The chip uses a novel material allowing quantum bits to maintain coherence far longer than previous technologies."},
+          {"id": 5, "sentence": "This advancement marks a significant milestone in the quest for practical quantum computing."}
+      ],
+      "summary": "Stanford University researchers have unveiled a quantum computer chip that dramatically improves processing speed and efficiency. The chip uses a novel material allowing quantum bits to maintain coherence far longer than previous technologies. This advancement marks a significant milestone in the quest for practical quantum computing. The innovation is expected to revolutionize fields such as cryptography, material science, and pharmaceuticals. Experts believe this technology could bring quantum computing closer to mainstream applications.",
+      "title": "Stanford Launches Breakthrough Quantum Chip",
+      "tldr": [
+          "Stanford develops a quantum chip with enhanced processing capabilities.",
+          "New material extends coherence times for quantum bits.",
+          "A major leap toward practical quantum computers."
+      ],
+      "news_articles_ids": [12, 3, 5]
+  },
+  {
+      "refs": [
+          {"id": 7, "sentence": "MIT engineers have designed a biodegradable battery that can safely dissolve in water after use."},
+          {"id": 24, "sentence": "The device aims to reduce electronic waste in landfills significantly."},
+          {"id": 52, "sentence": "It is constructed using non-toxic materials safe for the environment."}
+      ],
+      "summary": "MIT engineers have designed a biodegradable battery that can safely dissolve in water after use. The device aims to reduce electronic waste in landfills significantly. It is constructed using non-toxic materials safe for the environment. The battery's performance is comparable to traditional counterparts but without the harmful environmental footprint. This breakthrough could lead to sustainable power solutions in portable electronics and medical implants.",
+      "title": "MIT Creates Eco-Friendly Biodegradable Battery",
+      "tldr": [
+          "MIT introduces a water-soluble, biodegradable battery.",
+          "Eco-friendly innovation aimed at reducing electronic waste.",
+          "Non-toxic materials ensure environmental safety."
+      ],
+      "news_articles_ids": [7, 24, 52]
+  },
+  {
+      "refs": [
+          {"id": 35, "sentence": "NASA's Perseverance rover has discovered evidence of ancient microbial life on Mars."},
+          {"id": 51, "sentence": "The findings were based on rock samples collected from the Jezero Crater."},
+          {"id": 53, "sentence": "Scientists detected organic molecules that suggest past biological activity."}
+      ],
+      "summary": "NASA's Perseverance rover has discovered evidence of ancient microbial life on Mars. The findings were based on rock samples collected from the Jezero Crater. Scientists detected organic molecules that suggest past biological activity. This discovery supports the theory that Mars was once a habitable environment. It marks a major milestone in humanity's search for extraterrestrial life.",
+      "title": "NASA Finds Signs of Ancient Life on Mars",
+      "tldr": [
+          "Perseverance rover uncovers signs of ancient microbial life.",
+          "Organic molecules hint at Mars' habitable past.",
+          "Significant advancement in astrobiology research."
+      ],
+      "news_articles_ids": [35, 51, 53]
+  },
+  {
+      "refs": [
+          {"id": 21, "sentence": "Oxford scientists developed a universal flu vaccine that targets multiple strains with a single shot."},
+          {"id": 88, "sentence": "The vaccine could eliminate the need for seasonal flu shots."},
+          {"id": 72, "sentence": "Clinical trials have shown strong immune responses across different age groups."}
+      ],
+      "summary": "Oxford scientists developed a universal flu vaccine that targets multiple strains with a single shot. The vaccine could eliminate the need for seasonal flu shots. Clinical trials have shown strong immune responses across different age groups. Researchers hope the vaccine will improve global pandemic preparedness. This innovation could significantly reduce the annual flu burden worldwide.",
+      "title": "Oxford Creates Universal Flu Vaccine",
+      "tldr": [
+          "Universal vaccine could prevent multiple flu strains.",
+          "Clinical trials show strong, broad immune responses.",
+          "Potential game-changer for global health security."
+      ],
+      "news_articles_ids": [21, 88, 72]
+  },
+  {
+      "refs": [
+          {"id": 18, "sentence": "Tokyo Tech researchers introduced a solar panel that doubles electricity output using advanced light absorption technology."},
+          {"id": 19, "sentence": "The new design captures a broader spectrum of sunlight."},
+          {"id": 20, "sentence": "It has potential applications in residential, commercial, and industrial sectors."}
+      ],
+      "summary": "Tokyo Tech researchers introduced a solar panel that doubles electricity output using advanced light absorption technology. The new design captures a broader spectrum of sunlight. It has potential applications in residential, commercial, and industrial sectors. Increased efficiency could lead to lower energy costs and greater adoption of solar power. This innovation represents a major step toward sustainable energy solutions.",
+      "title": "Tokyo Tech Develops High-Efficiency Solar Panel",
+      "tldr": [
+          "Solar panels with double the efficiency now possible.",
+          "Captures broader sunlight spectrum for maximum energy.",
+          "Significant impact on sustainable energy adoption."
+      ],
+      "news_articles_ids": [18, 19, 20]
+  }
+]

@@ -53,8 +53,13 @@ def healthcheck():
 def get_news():
     # Get query parameters
     source = request.args.get('source')
+    ids = request.args.get('ids')
     limit = int(request.args.get('limit', 10))
     offset = int(request.args.get('offset', 0))
+    
+    if ids:
+        ids = ids.split(',')
+        ids = [int(id) for id in ids]
     
     try:
         conn = get_db_connection()
@@ -67,6 +72,10 @@ def get_news():
         if source:
             query += " WHERE source = %s"
             params.append(source)
+        
+        if ids:
+            query += " WHERE id IN %s"
+            params.append(tuple(ids))
             
         query += " ORDER BY pub_date DESC LIMIT %s OFFSET %s"
         params.extend([limit, offset])
@@ -220,7 +229,7 @@ def get_summaries():
             
             # Search by vector similarity
             sql_query = """
-                SELECT id, title, tldr, summary, news_articles_ids, created_at,
+                SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
                        embedding <=> %s::vector as distance
                 FROM summaries
                 ORDER BY distance
@@ -230,7 +239,7 @@ def get_summaries():
         else:
             # Get all summaries
             sql_query = """
-                SELECT id, title, tldr, summary, news_articles_ids, created_at
+                SELECT id, title, tldr, summary, news_articles_ids, refs, created_at
                 FROM summaries
                 ORDER BY created_at DESC
                 LIMIT %s OFFSET %s
@@ -246,18 +255,25 @@ def get_summaries():
         # Format results
         summaries = []
         for row in rows:
+            # Convert refs array of strings to array of objects
+            refs_array = []
+            if row[5]:  # Check if refs exists
+                for i, sentence in enumerate(row[5]):
+                    refs_array.append({"id": i+1, "sentence": sentence})
+            
             summary_data = {
                 "id": row[0],
                 "title": row[1],
                 "tldr": row[2],
                 "summary": row[3],
                 "news_articles_ids": row[4],
-                "created_at": row[5].isoformat() if row[5] else None
+                "refs": refs_array,
+                "created_at": row[6].isoformat() if row[6] else None
             }
             
             # Add similarity if search query was provided
-            if query and len(row) > 6:
-                summary_data["similarity"] = 1 - row[6]  # Convert distance to similarity
+            if query and len(row) > 7:
+                summary_data["similarity"] = 1 - row[7]  # Convert distance to similarity
                 
             summaries.append(summary_data)
         
@@ -282,7 +298,7 @@ def get_summary(summary_id):
         
         # Get the summary
         cur.execute("""
-            SELECT id, title, tldr, summary, news_articles_ids, created_at
+            SELECT id, title, tldr, summary, news_articles_ids, refs, created_at
             FROM summaries
             WHERE id = %s
         """, (summary_id,))
@@ -294,6 +310,12 @@ def get_summary(summary_id):
             conn.close()
             return jsonify({"error": "Summary not found"}), 404
         
+        # Convert refs array of strings to array of objects
+        refs_array = []
+        if row[5]:  # Check if refs exists
+            for i, sentence in enumerate(row[5]):
+                refs_array.append({"id": i+1, "sentence": sentence})
+        
         # Format result
         summary_data = {
             "id": row[0],
@@ -301,13 +323,79 @@ def get_summary(summary_id):
             "tldr": row[2],
             "summary": row[3],
             "news_articles_ids": row[4],
-            "created_at": row[5].isoformat() if row[5] else None
+            "refs": refs_array,
+            "created_at": row[6].isoformat() if row[6] else None
         }
         
         cur.close()
         conn.close()
         
         return jsonify(summary_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/summaries/search', methods=['POST'])
+def search_summary():
+    """Search for summaries by similarity using vector search"""
+    # Get search parameters from request body
+    search_data = request.get_json()
+    
+    if not search_data:
+        return jsonify({"error": "Search data is required"}), 400
+        
+    query = search_data.get('q', '')
+    limit = int(search_data.get('limit', 10))
+    
+    if not query:
+        return jsonify({"error": "Search query is required"}), 400
+    
+    try:
+        from data_loader import create_simple_embedding
+        
+        # Create embedding from search query
+        embedding = create_simple_embedding(query)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Search by vector similarity
+        sql_query = """
+            SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
+                   embedding <=> %s::vector as distance
+            FROM summaries
+            ORDER BY distance
+            LIMIT %s
+        """
+        cur.execute(sql_query, (str(embedding), limit))
+        rows = cur.fetchall()
+        
+        # Format results
+        summaries = []
+        for row in rows:
+            # Convert refs array of strings to array of objects
+            refs_array = []
+            if row[5]:  # Check if refs exists
+                for i, sentence in enumerate(row[5]):
+                    refs_array.append({"id": i+1, "sentence": sentence})
+            
+            summaries.append({
+                "id": row[0],
+                "title": row[1],
+                "tldr": row[2],
+                "summary": row[3],
+                "news_articles_ids": row[4],
+                "refs": refs_array,
+                "created_at": row[6].isoformat() if row[6] else None,
+                "similarity": 1 - row[7]  # Convert distance to similarity
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "query": query,
+            "summaries": summaries
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
