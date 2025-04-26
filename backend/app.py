@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import psycopg2
@@ -17,6 +18,8 @@ DB_USER = os.getenv('POSTGRES_USER', 'postgres')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
 
 app = Flask(__name__)
+# Enable CORS for all routes and origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 def get_db_connection():
     """Connect to the PostgreSQL database server"""
