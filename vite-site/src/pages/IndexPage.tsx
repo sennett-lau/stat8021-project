@@ -5,10 +5,10 @@ import { getNewsById, getSummaries, searchSummaries, type NewsItem, type Summary
 const IndexPage = () => {
   const [summaries, setSummaries] = useState<SummaryItem[]>([]);
   const [selectedSummary, setSelectedSummary] = useState<SummaryItem | null>(null);
-  const [selectedNewsId, setSelectedNewsId] = useState<number | null>(null);
-  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
+  const [selectedNewsItem, setSelectedNewsItem] = useState<NewsItem | null>(null);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,27 @@ const IndexPage = () => {
 
     fetchSummaries();
   }, []);
+
+  useEffect(() => {
+    const fetchRelatedNews = async () => {
+      if (selectedSummary && selectedSummary.news_articles_ids.length > 0) {
+        setIsLoading(true);
+        try {
+          const newsData = await getNewsById(selectedSummary.news_articles_ids);
+          setRelatedNews(newsData.articles);
+        } catch (error) {
+          console.error('Failed to fetch related news:', error);
+          setRelatedNews([]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setRelatedNews([]);
+      }
+    };
+
+    fetchRelatedNews();
+  }, [selectedSummary]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -54,19 +75,15 @@ const IndexPage = () => {
     setSearchQuery('');
   };
 
-  const handleNewsClick = async (newsId: number) => {
-    setIsLoading(true);
-    setSelectedNewsId(newsId);
-    try {
-      const newsData = await getNewsById([newsId]);
-      if (newsData.articles.length > 0) {
-        setNewsItem(newsData.articles[0]);
-        setNewsModalOpen(true);
-      }
-    } catch (error) {
-      console.error('Failed to fetch news:', error);
-    } finally {
-      setIsLoading(false);
+  const handleNewsClick = (newsItem: NewsItem) => {
+    setSelectedNewsItem(newsItem);
+    setNewsModalOpen(true);
+  };
+
+  const handleReferenceClick = (index: number) => {
+    if (relatedNews.length > index) {
+      setSelectedNewsItem(relatedNews[index]);
+      setNewsModalOpen(true);
     }
   };
 
@@ -80,6 +97,43 @@ const IndexPage = () => {
       second: '2-digit',
       hour12: false
     }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2 $4:$5:$6');
+  };
+
+  const renderSummaryWithReferences = (summary: string) => {
+    if (!summary) return null;
+    
+    // Simple split by sentence-ending punctuation followed by a space
+    const sentences = summary.split(/([.!?]\s+)/g);
+    
+    // Group every other element (sentence + punctuation)
+    const groupedSentences = [];
+    for (let i = 0; i < sentences.length; i += 2) {
+      const sentence = sentences[i];
+      const punctuation = sentences[i + 1] || '';
+      groupedSentences.push(sentence + punctuation);
+    }
+    
+    // Add references to each sentence (cycling through all available references)
+    return (
+      <p className="text-gray-300">
+        {groupedSentences.map((sentence, index) => {
+          const referenceIndex = index % (relatedNews.length || 1);
+          return (
+            <span key={index}>
+              {sentence}
+              {relatedNews.length > 0 && index < groupedSentences.length - 1 && (
+                <sup 
+                  className="ml-1 text-blue-400 cursor-pointer hover:text-blue-300"
+                  onClick={() => handleReferenceClick(referenceIndex)}
+                >
+                  [{referenceIndex + 1}]
+                </sup>
+              )}
+            </span>
+          );
+        })}
+      </p>
+    );
   };
 
   return (
@@ -170,27 +224,53 @@ const IndexPage = () => {
               )}
               
               <div className="prose prose-invert max-w-none mb-6">
-                <p className="text-gray-300">{selectedSummary.summary}</p>
+                {isLoading ? (
+                  <p className="text-gray-300">{selectedSummary.summary}</p>
+                ) : (
+                  renderSummaryWithReferences(selectedSummary.summary)
+                )}
+                
+                {relatedNews.length > 0 && (
+                  <div className="mt-3 text-sm text-gray-400">
+                    <p>Click on reference numbers [n] to view the related article.</p>
+                  </div>
+                )}
               </div>
               
               {/* Related News Articles */}
-              {selectedSummary.news_articles_ids && selectedSummary.news_articles_ids.length > 0 && (
-                <div>
+              {isLoading ? (
+                <div className="mt-6">
                   <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
-                  <ul className="space-y-2">
-                    {selectedSummary.news_articles_ids.map((newsId) => (
-                      <li key={newsId}>
-                        <button
-                          onClick={() => handleNewsClick(newsId)}
-                          className="text-blue-400 hover:text-blue-300 hover:underline"
-                        >
-                          Article #{newsId}
-                        </button>
+                  <p className="text-gray-400">Loading articles...</p>
+                </div>
+              ) : relatedNews.length > 0 ? (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <ul className="space-y-3 mt-4">
+                    {relatedNews.map((article, index) => (
+                      <li 
+                        key={article.id}
+                        className="border border-gray-800 rounded-md p-3 hover:bg-gray-800/50 transition-colors cursor-pointer"
+                        onClick={() => handleNewsClick(article)}
+                      >
+                        <h4 className="text-lg font-medium text-blue-400 hover:text-blue-300">
+                          [{index + 1}] {article.title}
+                        </h4>
+                        <div className="flex items-center text-sm text-gray-400 mt-1">
+                          <span className="mr-2">{article.source}</span>
+                          <span>•</span>
+                          <span className="ml-2">{formatDate(article.pub_date)}</span>
+                        </div>
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
+              ) : selectedSummary.news_articles_ids.length > 0 ? (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <p className="text-gray-400">No articles found</p>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
@@ -237,25 +317,21 @@ const IndexPage = () => {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70" />
           <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 rounded-lg shadow-lg p-6 w-[90%] max-w-2xl border border-gray-700 max-h-[80vh] overflow-y-auto">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <p className="text-gray-400">Loading article...</p>
-              </div>
-            ) : newsItem ? (
+            {selectedNewsItem ? (
               <>
-                <Dialog.Title className="text-xl font-bold mb-4 text-gray-100">{newsItem.title}</Dialog.Title>
+                <Dialog.Title className="text-xl font-bold mb-4 text-gray-100">{selectedNewsItem.title}</Dialog.Title>
                 <div className="flex items-center text-sm text-gray-400 mb-4">
-                  <span className="mr-2">{newsItem.source}</span>
+                  <span className="mr-2">{selectedNewsItem.source}</span>
                   <span>•</span>
-                  <span className="ml-2">{formatDate(newsItem.pub_date)}</span>
+                  <span className="ml-2">{formatDate(selectedNewsItem.pub_date)}</span>
                 </div>
                 <div className="prose prose-invert max-w-none mb-4">
-                  <p className="text-gray-300">{newsItem.content}</p>
+                  <p className="text-gray-300">{selectedNewsItem.content}</p>
                 </div>
-                {newsItem.link && (
+                {selectedNewsItem.link && (
                   <div className="mt-4">
                     <a 
-                      href={newsItem.link} 
+                      href={selectedNewsItem.link} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-400 hover:text-blue-300 hover:underline"

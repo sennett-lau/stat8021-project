@@ -136,9 +136,10 @@ export const getNewsById = async (ids: number[]): Promise<NewsResponse> => {
   
   try {
     const queryParams = new URLSearchParams();
-    ids.forEach(id => queryParams.append('ids', id.toString()));
+    const idsString = ids.join(',');
+    queryParams.append('ids', idsString);
     
-    const response = await fetch(`${BACKEND_URL}/api/news/by-ids?${queryParams.toString()}`);
+    const response = await fetch(`${BACKEND_URL}/api/news?${queryParams.toString()}`);
     if (!response.ok) {
       throw new Error('Failed to fetch news by ids');
     }
