@@ -1,8 +1,10 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 import os
 import psycopg2
 from pgvector.psycopg2 import register_vector
+import numpy as np
+import threading
 
 # Load environment variables from .env file
 load_dotenv()
@@ -44,6 +46,140 @@ def healthcheck():
     except Exception as e:
         return jsonify({"status": "ok", "database": "error", "message": str(e)})
 
+@app.route('/api/news', methods=['GET'])
+def get_news():
+    # Get query parameters
+    source = request.args.get('source')
+    limit = int(request.args.get('limit', 10))
+    offset = int(request.args.get('offset', 0))
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Construct the query based on parameters
+        query = "SELECT id, source, title, link, pub_date, content FROM news_articles"
+        params = []
+        
+        if source:
+            query += " WHERE source = %s"
+            params.append(source)
+            
+        query += " ORDER BY pub_date DESC LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+        
+        cur.execute(query, params)
+        rows = cur.fetchall()
+        
+        # Get total count for pagination
+        count_query = "SELECT COUNT(*) FROM news_articles"
+        if source:
+            count_query += " WHERE source = %s"
+            cur.execute(count_query, [source])
+        else:
+            cur.execute(count_query)
+        total_count = cur.fetchone()[0]
+        
+        # Format results
+        articles = []
+        for row in rows:
+            articles.append({
+                "id": row[0],
+                "source": row[1],
+                "title": row[2],
+                "link": row[3],
+                "pub_date": row[4].isoformat() if row[4] else None,
+                "content": row[5]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "total": total_count,
+            "offset": offset,
+            "limit": limit,
+            "articles": articles
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/news/search', methods=['POST'])
+def search_news():
+    # Get search parameters from request body
+    search_data = request.get_json()
+    
+    if not search_data:
+        return jsonify({"error": "Search data is required"}), 400
+        
+    query = search_data.get('q', '')
+    source = search_data.get('source')
+    limit = int(search_data.get('limit', 10))
+    
+    if not query:
+        return jsonify({"error": "Search query is required"}), 400
+    
+    try:
+        from data_loader import create_simple_embedding
+        
+        # Create embedding from search query
+        embedding = create_simple_embedding(query)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Construct the query based on parameters
+        sql_query = """
+            SELECT id, source, title, link, pub_date, content, 
+                   embedding <=> %s::vector as distance
+            FROM news_articles
+        """
+        params = [str(embedding)]  # Convert to string format for pgvector
+        
+        if source:
+            sql_query += " WHERE source = %s"
+            params.append(source)
+            
+        sql_query += " ORDER BY distance LIMIT %s"
+        params.append(limit)
+        
+        cur.execute(sql_query, params)
+        rows = cur.fetchall()
+        
+        # Format results
+        articles = []
+        for row in rows:
+            articles.append({
+                "id": row[0],
+                "source": row[1],
+                "title": row[2],
+                "link": row[3],
+                "pub_date": row[4].isoformat() if row[4] else None,
+                "content": row[5],
+                "similarity": 1 - row[6]  # Convert distance to similarity
+            })
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "query": query,
+            "articles": articles
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def load_data_async():
+    """Load data asynchronously on startup"""
+    try:
+        from data_loader import load_csv_data
+        load_csv_data()
+    except Exception as e:
+        print(f"Error loading data: {str(e)}")
+
 if __name__ == '__main__':
+    # Start data loading in a background thread
+    threading.Thread(target=load_data_async).start()
+    
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True) 
