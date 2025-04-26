@@ -1,6 +1,15 @@
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8021';
 const IS_MOCK_API = import.meta.env.VITE_IS_MOCK_API === 'true';
 
+// Function to format API URL correctly - avoids double /api/api issue
+const formatApiUrl = (path: string) => {
+  // If BACKEND_URL already ends with /api, don't add it again
+  if (BACKEND_URL === '/api') {
+    return `${BACKEND_URL}${path.startsWith('/') ? path : '/' + path}`;
+  }
+  return `${BACKEND_URL}/api${path.startsWith('/') ? path : '/' + path}`;
+};
+
 interface NewsItem {
   id: string;
   title: string;
@@ -106,7 +115,7 @@ export const getNews = async (): Promise<NewsResponse> => {
   }
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/news`);
+    const response = await fetch(formatApiUrl('/news'));
     if (!response.ok) {
       throw new Error('Failed to fetch news');
     }
@@ -139,7 +148,7 @@ export const getNewsById = async (ids: number[]): Promise<NewsResponse> => {
     const idsString = ids.join(',');
     queryParams.append('ids', idsString);
     
-    const response = await fetch(`${BACKEND_URL}/api/news?${queryParams.toString()}`);
+    const response = await fetch(formatApiUrl(`/news?${queryParams.toString()}`));
     if (!response.ok) {
       throw new Error('Failed to fetch news by ids');
     }
@@ -171,7 +180,7 @@ export const searchNews = async (query: string): Promise<NewsResponse> => {
   }
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/news/search`, {
+    const response = await fetch(formatApiUrl('/news/search'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -205,7 +214,7 @@ export const getSummaries = async (): Promise<SummaryResponse> => {
   }
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/summaries`);
+    const response = await fetch(formatApiUrl('/summaries'));
     if (!response.ok) {
       throw new Error('Failed to fetch summaries');
     }
@@ -237,7 +246,7 @@ export const searchSummaries = async (query: string): Promise<SummaryResponse> =
   }
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/summaries/search`, {
+    const response = await fetch(formatApiUrl('/summaries/search'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
