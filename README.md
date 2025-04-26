@@ -11,7 +11,7 @@ This project is a full-stack application for analyzing and summarizing Hong Kong
 Please copy `backend/.env.example` as `backend/.env`, place your OpenAI API key to `OPENAI_API_KEY`, then start the entire application stack:
 
 ```bash
-./start.sh
+sh start.sh
 ```
 
 This will:
