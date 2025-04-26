@@ -6,3 +6,8 @@ node_modules
 */**/logs
 */**/temp
 */**/cache
+*/.vite
+*/**/.DS_Store
+*/.DS_Store
+.DS_Store
+
