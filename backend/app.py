@@ -172,6 +172,145 @@ def search_news():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/summaries', methods=['POST'])
+def create_summary():
+    """Create a summary from a list of news article IDs"""
+    # Get article IDs from request body
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "Request data is required"}), 400
+        
+    article_ids = data.get('article_ids', [])
+    
+    if not article_ids:
+        return jsonify({"error": "Article IDs are required"}), 400
+    
+    try:
+        from summarize import summarize_news_articles
+        
+        # Generate summary for the provided articles
+        result = summarize_news_articles(article_ids)
+        
+        if "error" in result:
+            return jsonify({"error": result["error"]}), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/summaries', methods=['GET'])
+def get_summaries():
+    """Get all summaries or search for summaries by similarity"""
+    # Get query parameters
+    query = request.args.get('q')
+    limit = int(request.args.get('limit', 10))
+    offset = int(request.args.get('offset', 0))
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        if query:
+            # Search by similarity
+            from data_loader import create_simple_embedding
+            
+            # Create embedding from search query
+            embedding = create_simple_embedding(query)
+            
+            # Search by vector similarity
+            sql_query = """
+                SELECT id, title, tldr, summary, news_articles_ids, created_at,
+                       embedding <=> %s::vector as distance
+                FROM summaries
+                ORDER BY distance
+                LIMIT %s OFFSET %s
+            """
+            cur.execute(sql_query, (str(embedding), limit, offset))
+        else:
+            # Get all summaries
+            sql_query = """
+                SELECT id, title, tldr, summary, news_articles_ids, created_at
+                FROM summaries
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """
+            cur.execute(sql_query, (limit, offset))
+        
+        rows = cur.fetchall()
+        
+        # Get total count for pagination
+        cur.execute("SELECT COUNT(*) FROM summaries")
+        total_count = cur.fetchone()[0]
+        
+        # Format results
+        summaries = []
+        for row in rows:
+            summary_data = {
+                "id": row[0],
+                "title": row[1],
+                "tldr": row[2],
+                "summary": row[3],
+                "news_articles_ids": row[4],
+                "created_at": row[5].isoformat() if row[5] else None
+            }
+            
+            # Add similarity if search query was provided
+            if query and len(row) > 6:
+                summary_data["similarity"] = 1 - row[6]  # Convert distance to similarity
+                
+            summaries.append(summary_data)
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "total": total_count,
+            "offset": offset,
+            "limit": limit,
+            "summaries": summaries
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/summaries/<int:summary_id>', methods=['GET'])
+def get_summary(summary_id):
+    """Get a specific summary by ID"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get the summary
+        cur.execute("""
+            SELECT id, title, tldr, summary, news_articles_ids, created_at
+            FROM summaries
+            WHERE id = %s
+        """, (summary_id,))
+        
+        row = cur.fetchone()
+        
+        if not row:
+            cur.close()
+            conn.close()
+            return jsonify({"error": "Summary not found"}), 404
+        
+        # Format result
+        summary_data = {
+            "id": row[0],
+            "title": row[1],
+            "tldr": row[2],
+            "summary": row[3],
+            "news_articles_ids": row[4],
+            "created_at": row[5].isoformat() if row[5] else None
+        }
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify(summary_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 def load_data_async():
     """Load data asynchronously on startup"""
     try:
