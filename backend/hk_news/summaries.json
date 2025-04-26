@@ -73,5 +73,380 @@
           "Significant impact on sustainable energy adoption."
       ],
       "news_articles_ids": [18, 19, 20]
+  },
+  {
+      "refs": [
+          {"id": 41, "sentence": "Hong Kong University researchers develop AI system that predicts infectious disease outbreaks with 89% accuracy."},
+          {"id": 43, "sentence": "The system analyzes environmental, social, and clinical data to forecast outbreak patterns."},
+          {"id": 45, "sentence": "Early tests show promising results for dengue fever and influenza prediction."}
+      ],
+      "summary": "Hong Kong University researchers develop AI system that predicts infectious disease outbreaks with 89% accuracy. The system analyzes environmental, social, and clinical data to forecast outbreak patterns. Early tests show promising results for dengue fever and influenza prediction. Public health officials believe this technology could revolutionize epidemic prevention strategies. The team is now working to expand the system's capabilities to detect emerging pathogens.",
+      "title": "HKU Creates AI System for Disease Outbreak Prediction",
+      "tldr": [
+          "AI system predicts disease outbreaks with high accuracy.",
+          "Analyzes multiple data sources for comprehensive forecasting.",
+          "Potential to transform public health response strategies."
+      ],
+      "news_articles_ids": [41, 43, 45]
+  },
+  {
+      "refs": [
+          {"id": 63, "sentence": "CUHK scientists engineer drought-resistant rice variety that requires 40% less water."},
+          {"id": 65, "sentence": "The modified crop maintains yield levels comparable to traditional varieties."},
+          {"id": 67, "sentence": "Field trials in Asia show promising results for food security in changing climate conditions."}
+      ],
+      "summary": "CUHK scientists engineer drought-resistant rice variety that requires 40% less water. The modified crop maintains yield levels comparable to traditional varieties. Field trials in Asia show promising results for food security in changing climate conditions. This breakthrough could help secure food supplies in regions facing increasing water scarcity. Agricultural experts call it a significant advancement in climate-adaptive farming technology.",
+      "title": "CUHK Develops Water-Efficient Rice for Climate Resilience",
+      "tldr": [
+          "New rice variety uses 40% less water without yield loss.",
+          "Field tests confirm viability across Asian growing regions.",
+          "Critical innovation for food security in water-scarce areas."
+      ],
+      "news_articles_ids": [63, 65, 67]
+  },
+  {
+      "refs": [
+          {"id": 78, "sentence": "Hong Kong Science Park startup unveils wearable device that monitors air quality and vital signs simultaneously."},
+          {"id": 79, "sentence": "The device alerts users to dangerous pollution levels and potential health impacts."},
+          {"id": 81, "sentence": "Early adoption shows reduced respiratory issues among users in urban environments."}
+      ],
+      "summary": "Hong Kong Science Park startup unveils wearable device that monitors air quality and vital signs simultaneously. The device alerts users to dangerous pollution levels and potential health impacts. Early adoption shows reduced respiratory issues among users in urban environments. The technology combines environmental sensors with health monitoring in a compact wristband design. Health officials praise the innovation as a powerful tool for understanding pollution's immediate health effects.",
+      "title": "Hong Kong Startup Creates Health-Monitoring Air Quality Wearable",
+      "tldr": [
+          "Wearable device tracks both air quality and health metrics.",
+          "Real-time alerts help users avoid dangerous pollution exposure.",
+          "Shows measurable health benefits in early user testing."
+      ],
+      "news_articles_ids": [78, 79, 81]
+  },
+  {
+      "refs": [
+          {"id": 92, "sentence": "PolyU researchers develop self-healing concrete that repairs cracks using embedded bacteria."},
+          {"id": 94, "sentence": "The material could extend infrastructure lifespan by 30-50% while reducing maintenance costs."},
+          {"id": 95, "sentence": "The technology has been successfully tested on several Hong Kong buildings."}
+      ],
+      "summary": "PolyU researchers develop self-healing concrete that repairs cracks using embedded bacteria. The material could extend infrastructure lifespan by 30-50% while reducing maintenance costs. The technology has been successfully tested on several Hong Kong buildings. When cracks form, the bacteria activate and produce limestone that fills the gaps naturally. This innovation represents a major breakthrough for sustainable construction and infrastructure resilience.",
+      "title": "PolyU Creates Self-Healing Concrete for Stronger Infrastructure",
+      "tldr": [
+          "Concrete uses bacteria to automatically repair cracks.",
+          "Extends building lifespan while cutting maintenance expenses.",
+          "Successfully implemented in Hong Kong construction projects."
+      ],
+      "news_articles_ids": [92, 94, 95]
+  },
+  {
+      "refs": [
+          {"id": 103, "sentence": "HKUST marine biologists discover compound in deep-sea sponges with powerful cancer-fighting properties."},
+          {"id": 105, "sentence": "Laboratory tests show the molecule effectively targets aggressive breast cancer cells."},
+          {"id": 107, "sentence": "Researchers are developing synthetic versions for pharmaceutical applications."}
+      ],
+      "summary": "HKUST marine biologists discover compound in deep-sea sponges with powerful cancer-fighting properties. Laboratory tests show the molecule effectively targets aggressive breast cancer cells. Researchers are developing synthetic versions for pharmaceutical applications. The discovery highlights the untapped potential of marine ecosystems for medical breakthroughs. Clinical trials could begin within two years if development continues at the current pace.",
+      "title": "HKUST Finds Cancer-Fighting Compound in Deep-Sea Organisms",
+      "tldr": [
+          "Deep-sea sponge compound shows anti-cancer properties.",
+          "Particularly effective against aggressive breast cancer cells.",
+          "Synthetic version in development for potential drug treatment."
+      ],
+      "news_articles_ids": [103, 105, 107]
+  },
+  {
+      "refs": [
+          {"id": 110, "sentence": "CityU researchers develop new nanomaterial that converts waste heat into electricity with record efficiency."},
+          {"id": 111, "sentence": "The technology could recover energy from industrial processes and vehicle engines."},
+          {"id": 113, "sentence": "Prototype devices demonstrate 35% higher conversion rates than existing thermoelectric materials."}
+      ],
+      "summary": "CityU researchers develop new nanomaterial that converts waste heat into electricity with record efficiency. The technology could recover energy from industrial processes and vehicle engines. Prototype devices demonstrate 35% higher conversion rates than existing thermoelectric materials. This breakthrough could significantly reduce energy waste across multiple industries. Experts suggest the innovation may play a crucial role in achieving carbon neutrality goals.",
+      "title": "CityU Creates Record-Breaking Waste Heat Recovery Material",
+      "tldr": [
+          "Novel nanomaterial converts waste heat to electricity efficiently.",
+          "35% improvement over existing thermoelectric technologies.",
+          "Potential applications in industrial and automotive sectors."
+      ],
+      "news_articles_ids": [110, 111, 113]
+  },
+  {
+      "refs": [
+          {"id": 115, "sentence": "CUHK medical team pioneers minimally invasive robotic surgery technique for complex brain operations."},
+          {"id": 116, "sentence": "The method reduces patient recovery time by 60% compared to traditional approaches."},
+          {"id": 118, "sentence": "The system integrates AI guidance to avoid critical neural structures during procedures."}
+      ],
+      "summary": "CUHK medical team pioneers minimally invasive robotic surgery technique for complex brain operations. The method reduces patient recovery time by 60% compared to traditional approaches. The system integrates AI guidance to avoid critical neural structures during procedures. Initial clinical trials show promising results with reduced complications and shorter hospital stays. The technology could transform neurosurgical practices worldwide and improve patient outcomes.",
+      "title": "CUHK Advances AI-Guided Robotic Brain Surgery",
+      "tldr": [
+          "New robotic system enables minimally invasive brain surgery.",
+          "AI guidance helps surgeons navigate complex neural structures.",
+          "Reduces recovery time by 60% with fewer complications."
+      ],
+      "news_articles_ids": [115, 116, 118]
+  },
+  {
+      "refs": [
+          {"id": 120, "sentence": "HKUST computer scientists create algorithm that reduces AI training energy consumption by 78%."},
+          {"id": 121, "sentence": "The technique maintains model accuracy while dramatically cutting computational requirements."},
+          {"id": 123, "sentence": "Major tech companies are already implementing the approach in data centers worldwide."}
+      ],
+      "summary": "HKUST computer scientists create algorithm that reduces AI training energy consumption by 78%. The technique maintains model accuracy while dramatically cutting computational requirements. Major tech companies are already implementing the approach in data centers worldwide. This breakthrough addresses one of AI development's most significant environmental challenges. Researchers estimate the method could save millions in energy costs annually while reducing carbon emissions.",
+      "title": "HKUST Algorithm Slashes AI Energy Consumption",
+      "tldr": [
+          "New algorithm cuts AI training energy use by 78%.",
+          "Maintains model accuracy despite resource reduction.",
+          "Already being implemented in commercial data centers."
+      ],
+      "news_articles_ids": [120, 121, 123]
+  },
+  {
+      "refs": [
+          {"id": 125, "sentence": "HKU engineers develop transparent solar panels that can replace windows in buildings."},
+          {"id": 127, "sentence": "The technology generates electricity while allowing 70% of visible light to pass through."},
+          {"id": 128, "sentence": "Initial installations demonstrate potential for energy-neutral office buildings in urban environments."}
+      ],
+      "summary": "HKU engineers develop transparent solar panels that can replace windows in buildings. The technology generates electricity while allowing 70% of visible light to pass through. Initial installations demonstrate potential for energy-neutral office buildings in urban environments. The innovation integrates seamlessly into architectural designs without compromising aesthetics. This technology could transform urban energy production in dense city environments like Hong Kong.",
+      "title": "HKU Creates Transparent Solar Windows for Urban Buildings",
+      "tldr": [
+          "Transparent solar panels function as normal windows.",
+          "Generate electricity while allowing 70% light transmission.",
+          "Potential breakthrough for energy-neutral urban architecture."
+      ],
+      "news_articles_ids": [125, 127, 128]
+  },
+  {
+      "refs": [
+          {"id": 130, "sentence": "PolyU textile scientists develop fabric that actively cools the wearer without using electricity."},
+          {"id": 132, "sentence": "The material can reduce skin temperature by up to 5°C in hot environments."},
+          {"id": 133, "sentence": "Technology uses special polymer structure to dissipate body heat and reflect sunlight."}
+      ],
+      "summary": "PolyU textile scientists develop fabric that actively cools the wearer without using electricity. The material can reduce skin temperature by up to 5°C in hot environments. Technology uses special polymer structure to dissipate body heat and reflect sunlight. This innovation could significantly reduce air conditioning usage in warm climates. Applications range from everyday clothing to specialized workwear for extreme environments.",
+      "title": "PolyU Invents Self-Cooling Fabric for Extreme Heat",
+      "tldr": [
+          "New fabric reduces skin temperature by 5°C without power.",
+          "Uses specialized polymers to dissipate heat efficiently.",
+          "Could reduce reliance on energy-intensive air conditioning."
+      ],
+      "news_articles_ids": [130, 132, 133]
+  },
+  {
+      "refs": [
+          {"id": 135, "sentence": "HKUST-MIT research team creates nanoscale robots that can perform targeted drug delivery inside the human body."},
+          {"id": 136, "sentence": "The microscopic devices navigate through bloodstreams to deliver medication directly to disease sites."},
+          {"id": 138, "sentence": "Animal trials show 300% improvement in treatment efficacy for certain cancers."}
+      ],
+      "summary": "HKUST-MIT research team creates nanoscale robots that can perform targeted drug delivery inside the human body. The microscopic devices navigate through bloodstreams to deliver medication directly to disease sites. Animal trials show 300% improvement in treatment efficacy for certain cancers. The technology could revolutionize treatment for various diseases while reducing medication side effects. Human clinical trials are expected to begin within three years pending regulatory approval.",
+      "title": "HKUST-MIT Develop Nanobots for Precision Medicine Delivery",
+      "tldr": [
+          "Microscopic robots deliver drugs directly to disease sites.",
+          "Navigate independently through bloodstream to target locations.",
+          "Show 300% improvement in cancer treatment efficacy."
+      ],
+      "news_articles_ids": [135, 136, 138]
+  },
+  {
+      "refs": [
+          {"id": 140, "sentence": "CityU researchers create artificial leaf that converts sunlight and water into hydrogen fuel more efficiently than natural photosynthesis."},
+          {"id": 142, "sentence": "The device generates clean hydrogen with 15 times the efficiency of previous artificial photosynthesis systems."},
+          {"id": 143, "sentence": "The technology uses earth-abundant materials, making large-scale production economically viable."}
+      ],
+      "summary": "CityU researchers create artificial leaf that converts sunlight and water into hydrogen fuel more efficiently than natural photosynthesis. The device generates clean hydrogen with 15 times the efficiency of previous artificial photosynthesis systems. The technology uses earth-abundant materials, making large-scale production economically viable. This breakthrough could accelerate the transition to hydrogen-based clean energy economies. Researchers are working with industry partners to scale up production for commercial applications.",
+      "title": "CityU's Artificial Leaf Revolutionizes Clean Hydrogen Production",
+      "tldr": [
+          "Artificial leaf converts sunlight directly to hydrogen fuel.",
+          "15x more efficient than previous synthetic photosynthesis.",
+          "Uses affordable materials for potential mass production."
+      ],
+      "news_articles_ids": [140, 142, 143]
+  },
+  {
+      "refs": [
+          {"id": 145, "sentence": "Hong Kong Baptist University chemists develop biodegradable plastic alternative from food waste."},
+          {"id": 146, "sentence": "The material decomposes completely in natural environments within 3-6 months."},
+          {"id": 148, "sentence": "Initial product testing shows comparable strength and flexibility to petroleum-based plastics."}
+      ],
+      "summary": "Hong Kong Baptist University chemists develop biodegradable plastic alternative from food waste. The material decomposes completely in natural environments within 3-6 months. Initial product testing shows comparable strength and flexibility to petroleum-based plastics. This innovation addresses two environmental challenges simultaneously: plastic pollution and food waste disposal. Several Hong Kong food packaging companies are already adopting the technology for commercial use.",
+      "title": "HKBU Creates Biodegradable Plastic from Food Waste",
+      "tldr": [
+          "New plastic alternative breaks down naturally in 3-6 months.",
+          "Made from processed food waste instead of petroleum.",
+          "Matches conventional plastic in strength and functionality."
+      ],
+      "news_articles_ids": [145, 146, 148]
+  },
+  {
+      "refs": [
+          {"id": 150, "sentence": "CUHK-led research team develops blood test that can detect five common cancers at early stages."},
+          {"id": 151, "sentence": "The liquid biopsy identifies specific DNA fragments and biomarkers with 92% accuracy."},
+          {"id": 153, "sentence": "The test could dramatically improve survival rates through early intervention and treatment."}
+      ],
+      "summary": "CUHK-led research team develops blood test that can detect five common cancers at early stages. The liquid biopsy identifies specific DNA fragments and biomarkers with 92% accuracy. The test could dramatically improve survival rates through early intervention and treatment. Clinical validation shows particularly strong results for colorectal, lung, liver, breast, and stomach cancers. Health authorities are fast-tracking approval to make the test available in hospitals within the next year.",
+      "title": "CUHK Develops Blood Test for Early Cancer Detection",
+      "tldr": [
+          "Single blood test detects five common cancers early.",
+          "92% accuracy in identifying cancer-specific biomarkers.",
+          "Could transform cancer survival rates through early detection."
+      ],
+      "news_articles_ids": [150, 151, 153]
+  },
+  {
+      "refs": [
+          {"id": 155, "sentence": "HKUST computer scientists create AI system that translates sign language to text and speech in real-time."},
+          {"id": 156, "sentence": "The technology works across multiple sign language dialects with 95% accuracy."},
+          {"id": 158, "sentence": "The system runs efficiently on standard smartphones without requiring internet connectivity."}
+      ],
+      "summary": "HKUST computer scientists create AI system that translates sign language to text and speech in real-time. The technology works across multiple sign language dialects with 95% accuracy. The system runs efficiently on standard smartphones without requiring internet connectivity. This breakthrough improves communication accessibility for deaf and hard-of-hearing communities. The application is being distributed freely to educational institutions and disability support organizations.",
+      "title": "HKUST AI Translates Sign Language to Text and Speech",
+      "tldr": [
+          "AI system converts sign language to text/speech instantly.",
+          "Works with multiple sign language dialects at 95% accuracy.",
+          "Runs on standard smartphones without internet connection."
+      ],
+      "news_articles_ids": [155, 156, 158]
+  },
+  {
+      "refs": [
+          {"id": 160, "sentence": "HKU marine scientists discover coral species in Hong Kong waters that resists bleaching in warming oceans."},
+          {"id": 162, "sentence": "Genetic analysis reveals unique adaptations that could help protect other coral populations."},
+          {"id": 163, "sentence": "Researchers are developing methods to transfer these resilient traits to endangered reef systems."}
+      ],
+      "summary": "HKU marine scientists discover coral species in Hong Kong waters that resists bleaching in warming oceans. Genetic analysis reveals unique adaptations that could help protect other coral populations. Researchers are developing methods to transfer these resilient traits to endangered reef systems. This finding offers new hope for coral conservation amid rising ocean temperatures. The discovery highlights the unexpected biodiversity value of Hong Kong's often overlooked marine ecosystems.",
+      "title": "HKU Discovers Heat-Resistant Coral in Hong Kong Waters",
+      "tldr": [
+          "Local coral species shows unusual resistance to bleaching.",
+          "Contains genetic adaptations for surviving warmer waters.",
+          "Could help save endangered coral reefs worldwide."
+      ],
+      "news_articles_ids": [160, 162, 163]
+  },
+  {
+      "refs": [
+          {"id": 165, "sentence": "PolyU engineers develop ultra-lightweight concrete that floats on water yet maintains structural integrity."},
+          {"id": 166, "sentence": "The material weighs 70% less than traditional concrete while retaining 80% of its strength."},
+          {"id": 168, "sentence": "Applications include floating infrastructure, disaster-resistant buildings, and marine construction."}
+      ],
+      "summary": "PolyU engineers develop ultra-lightweight concrete that floats on water yet maintains structural integrity. The material weighs 70% less than traditional concrete while retaining 80% of its strength. Applications include floating infrastructure, disaster-resistant buildings, and marine construction. The innovation uses recycled materials and specialized air-entraining techniques. Architects suggest this could enable entirely new approaches to construction in flood-prone and coastal areas.",
+      "title": "PolyU Creates Floating Concrete for Resilient Infrastructure",
+      "tldr": [
+          "Revolutionary concrete floats on water while maintaining strength.",
+          "70% lighter than conventional concrete with comparable durability.",
+          "Enables new solutions for flood-prone and coastal construction."
+      ],
+      "news_articles_ids": [165, 166, 168]
+  },
+  {
+      "refs": [
+          {"id": 170, "sentence": "CityU computer scientists develop AI system that predicts structural failures in buildings before they occur."},
+          {"id": 171, "sentence": "The technology uses distributed sensors and machine learning to detect microscopic changes in building integrity."},
+          {"id": 173, "sentence": "Early warning system could prevent catastrophic collapses and save lives during earthquakes or storms."}
+      ],
+      "summary": "CityU computer scientists develop AI system that predicts structural failures in buildings before they occur. The technology uses distributed sensors and machine learning to detect microscopic changes in building integrity. Early warning system could prevent catastrophic collapses and save lives during earthquakes or storms. The system has been successfully tested in several aging structures throughout Hong Kong. Building safety officials are considering mandating the technology for older high-rises in the region.",
+      "title": "CityU AI System Detects Building Structural Failures Before They Happen",
+      "tldr": [
+          "AI system predicts building structural failures in advance.",
+          "Uses sensor network to detect early warning signs of damage.",
+          "Could prevent catastrophic collapses during natural disasters."
+      ],
+      "news_articles_ids": [170, 171, 173]
+  },
+  {
+      "refs": [
+          {"id": 175, "sentence": "HKUST researchers develop ceramic membrane that removes microplastics from drinking water with 99.9% efficiency."},
+          {"id": 177, "sentence": "The filtration system operates without electricity and requires minimal maintenance."},
+          {"id": 178, "sentence": "The technology can be scaled from household units to municipal water treatment plants."}
+      ],
+      "summary": "HKUST researchers develop ceramic membrane that removes microplastics from drinking water with 99.9% efficiency. The filtration system operates without electricity and requires minimal maintenance. The technology can be scaled from household units to municipal water treatment plants. The innovation addresses growing concerns about microplastic contamination in water supplies worldwide. The team is working with government agencies to implement the technology in public water systems.",
+      "title": "HKUST Creates Revolutionary Microplastic Water Filter",
+      "tldr": [
+          "Ceramic membrane removes 99.9% of microplastics from water.",
+          "Works without electricity and needs little maintenance.",
+          "Scalable from home units to citywide water systems."
+      ],
+      "news_articles_ids": [175, 177, 178]
+  },
+  {
+      "refs": [
+          {"id": 180, "sentence": "CUHK agricultural scientists develop indoor vertical farming system that increases crop yield by 300% while using 95% less water."},
+          {"id": 182, "sentence": "The system combines specialized LED lighting, aeroponics, and AI-controlled environments."},
+          {"id": 183, "sentence": "The technology enables year-round food production regardless of external weather conditions."}
+      ],
+      "summary": "CUHK agricultural scientists develop indoor vertical farming system that increases crop yield by 300% while using 95% less water. The system combines specialized LED lighting, aeroponics, and AI-controlled environments. The technology enables year-round food production regardless of external weather conditions. This innovation could transform urban food security and reduce agricultural land requirements. Several commercial facilities using this system are already under construction in land-scarce Hong Kong.",
+      "title": "CUHK Vertical Farming System Triples Crop Yields",
+      "tldr": [
+          "Indoor farming technology increases yields by 300%.",
+          "Uses 95% less water than conventional agriculture.",
+          "Enables reliable year-round urban food production."
+      ],
+      "news_articles_ids": [180, 182, 183]
+  },
+  {
+      "refs": [
+          {"id": 185, "sentence": "HKU medical researchers develop artificial intelligence system that diagnoses childhood diseases from coughs with 93% accuracy."},
+          {"id": 187, "sentence": "The smartphone app can distinguish between 12 common respiratory conditions based on sound patterns."},
+          {"id": 188, "sentence": "The technology provides preliminary diagnosis in regions with limited access to pediatricians."}
+      ],
+      "summary": "HKU medical researchers develop artificial intelligence system that diagnoses childhood diseases from coughs with 93% accuracy. The smartphone app can distinguish between 12 common respiratory conditions based on sound patterns. The technology provides preliminary diagnosis in regions with limited access to pediatricians. Clinical validation shows particular effectiveness for identifying pneumonia, asthma, and bronchiolitis. The innovation aims to reduce treatment delays in remote areas and developing regions.",
+      "title": "HKU AI Diagnoses Childhood Illnesses from Cough Sounds",
+      "tldr": [
+          "AI system identifies 12 respiratory conditions from cough audio.",
+          "93% accuracy in initial diagnosis via smartphone app.",
+          "Provides critical support in regions lacking pediatric care."
+      ],
+      "news_articles_ids": [185, 187, 188]
+  },
+  {
+      "refs": [
+          {"id": 190, "sentence": "PolyU material scientists create battery that charges to 80% capacity in just 90 seconds without overheating."},
+          {"id": 191, "sentence": "The technology uses a novel composite electrode and electrolyte system."},
+          {"id": 193, "sentence": "The battery maintains performance for over 3,000 charge cycles without significant degradation."}
+      ],
+      "summary": "PolyU material scientists create battery that charges to 80% capacity in just 90 seconds without overheating. The technology uses a novel composite electrode and electrolyte system. The battery maintains performance for over 3,000 charge cycles without significant degradation. This breakthrough could transform electric vehicle adoption by eliminating long charging times. Several major electronics and automotive manufacturers are already licensing the technology.",
+      "title": "PolyU Develops Ultra-Fast Charging Battery Technology",
+      "tldr": [
+          "New battery charges to 80% in just 90 seconds.",
+          "Solves overheating issues common in fast-charging systems.",
+          "Maintains performance for 3,000+ charge cycles."
+      ],
+      "news_articles_ids": [190, 191, 193]
+  },
+  {
+      "refs": [
+          {"id": 195, "sentence": "CityU environmental engineers develop system that converts atmospheric carbon dioxide directly into construction materials."},
+          {"id": 196, "sentence": "The process captures CO2 and transforms it into carbonate compounds usable in building products."},
+          {"id": 198, "sentence": "Each ton of material produced removes 1.5 tons of CO2 from the atmosphere."}
+      ],
+      "summary": "CityU environmental engineers develop system that converts atmospheric carbon dioxide directly into construction materials. The process captures CO2 and transforms it into carbonate compounds usable in building products. Each ton of material produced removes 1.5 tons of CO2 from the atmosphere. This innovation creates a circular economy approach to construction while actively reducing greenhouse gases. The technology is being implemented in a pilot facility that will process 10,000 tons of CO2 annually.",
+      "title": "CityU Turns Carbon Dioxide into Building Materials",
+      "tldr": [
+          "System converts atmospheric CO2 into construction materials.",
+          "Each ton of product removes 1.5 tons of greenhouse gas.",
+          "Creates carbon-negative approach to building construction."
+      ],
+      "news_articles_ids": [195, 196, 198]
+  },
+  {
+      "refs": [
+          {"id": 200, "sentence": "HKBU neuroscientists develop non-invasive brain stimulation technique that improves memory in older adults by 43%."},
+          {"id": 201, "sentence": "The method uses targeted ultrasound to enhance neural connectivity in specific brain regions."},
+          {"id": 203, "sentence": "Clinical trials show significant improvements in both short and long-term memory formation."}
+      ],
+      "summary": "HKBU neuroscientists develop non-invasive brain stimulation technique that improves memory in older adults by 43%. The method uses targeted ultrasound to enhance neural connectivity in specific brain regions. Clinical trials show significant improvements in both short and long-term memory formation. The treatment requires just two 30-minute sessions weekly to maintain cognitive benefits. This breakthrough offers hope for age-related cognitive decline and early-stage dementia patients.",
+      "title": "HKBU Treatment Boosts Memory in Older Adults",
+      "tldr": [
+          "Non-invasive ultrasound technique improves memory by 43%.",
+          "Enhances neural connectivity in key brain regions.",
+          "Shows promise for treating age-related cognitive decline."
+      ],
+      "news_articles_ids": [200, 201, 203]
+  },
+  {
+      "refs": [
+          {"id": 205, "sentence": "Hong Kong Science Park startup develops digital twin technology that reduces manufacturing defects by 75%."},
+          {"id": 207, "sentence": "The system creates virtual replicas of production lines to simulate and optimize manufacturing processes."},
+          {"id": 208, "sentence": "Real-time monitoring allows immediate intervention when quality issues are predicted."}
+      ],
+      "summary": "Hong Kong Science Park startup develops digital twin technology that reduces manufacturing defects by 75%. The system creates virtual replicas of production lines to simulate and optimize manufacturing processes. Real-time monitoring allows immediate intervention when quality issues are predicted. The innovation has already been implemented in electronics and medical device manufacturing. Users report significant reductions in waste, energy consumption, and production costs.",
+      "title": "Hong Kong Startup's Digital Twin Technology Transforms Manufacturing",
+      "tldr": [
+          "Digital twin technology cuts manufacturing defects by 75%.",
+          "Creates virtual replicas of production lines for optimization.",
+          "Enables predictive quality control and immediate intervention."
+      ],
+      "news_articles_ids": [205, 207, 208]
   }
 ]
