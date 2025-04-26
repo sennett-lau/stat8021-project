@@ -17,6 +17,22 @@ interface NewsResponse {
   articles: NewsItem[];
 }
 
+interface SummaryItem {
+  id: number;
+  title: string;
+  summary: string;
+  created_at: string;
+  news_articles_ids: number[];
+  tldr: string[];
+}
+
+interface SummaryResponse {
+  total: number;
+  offset: number;
+  limit: number;
+  summaries: SummaryItem[];
+}
+
 // Mock data for development
 const mockNewsData: NewsItem[] = [
   {
@@ -61,6 +77,23 @@ const mockNewsData: NewsItem[] = [
   }
 ];
 
+// Mock data for summaries
+const mockSummaryData: SummaryItem[] = [
+  {
+    id: 1,
+    title: "HKUMed Introduces Groundbreaking AI for Thyroid Cancer Diagnosis",
+    summary: "The University of Hong Kong's medical school (HKUMed) has introduced a pioneering AI model capable of diagnosing thyroid cancer with more than 90% accuracy, significantly enhancing efficiency by halving clinicians' pre-consultation time. This innovative AI model is trained to analyze and classify stages and risk categories of thyroid cancer, outperforming traditional methods used by healthcare professionals. According to HKUMed, this model represents a major advancement over the existing systems by the American Joint Committee on Cancer and the American Thyroid Association.",
+    created_at: "2025-04-26T18:21:42.372227",
+    news_articles_ids: [1, 2],
+    tldr: [
+      "The University of Hong Kong's medical school developed the first AI model able to diagnose thyroid cancer with high accuracy.",
+      "The AI model achieves over 90% accuracy and reduces pre-consultation time for clinicians by 50%.",
+      "This AI system can classify the stage and risk category of thyroid cancer effectively.",
+      "HKUMed's AI model surpasses traditional manual methods for integrating clinical information in efficiency."
+    ]
+  }
+];
+
 export const getNews = async (): Promise<NewsResponse> => {
   if (IS_MOCK_API) {
     console.log('Using mock data for getNews');
@@ -80,6 +113,38 @@ export const getNews = async (): Promise<NewsResponse> => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching news:', error);
+    return {
+      total: 0,
+      offset: 0,
+      limit: 0,
+      articles: []
+    };
+  }
+};
+
+export const getNewsById = async (ids: number[]): Promise<NewsResponse> => {
+  if (IS_MOCK_API) {
+    console.log('Using mock data for getNewsById');
+    const filteredNews = mockNewsData.filter(item => ids.includes(Number(item.id)));
+    return Promise.resolve({
+      total: filteredNews.length,
+      offset: 0,
+      limit: filteredNews.length,
+      articles: filteredNews
+    });
+  }
+  
+  try {
+    const queryParams = new URLSearchParams();
+    ids.forEach(id => queryParams.append('ids', id.toString()));
+    
+    const response = await fetch(`${BACKEND_URL}/api/news/by-ids?${queryParams.toString()}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch news by ids');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching news by ids:', error);
     return {
       total: 0,
       offset: 0,
@@ -127,4 +192,70 @@ export const searchNews = async (query: string): Promise<NewsResponse> => {
   }
 };
 
-export type { NewsItem }; 
+export const getSummaries = async (): Promise<SummaryResponse> => {
+  if (IS_MOCK_API) {
+    console.log('Using mock data for getSummaries');
+    return Promise.resolve({
+      total: mockSummaryData.length,
+      offset: 0,
+      limit: mockSummaryData.length,
+      summaries: mockSummaryData
+    });
+  }
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/summaries`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch summaries');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching summaries:', error);
+    return {
+      total: 0,
+      offset: 0,
+      limit: 0,
+      summaries: []
+    };
+  }
+};
+
+export const searchSummaries = async (query: string): Promise<SummaryResponse> => {
+  if (IS_MOCK_API) {
+    console.log('Using mock data for searchSummaries');
+    return Promise.resolve({
+      total: mockSummaryData.length,
+      offset: 0,
+      limit: mockSummaryData.length,
+      summaries: mockSummaryData.filter(
+        item => 
+          item.title.toLowerCase().includes(query.toLowerCase()) || 
+          item.summary.toLowerCase().includes(query.toLowerCase())
+      )
+    });
+  }
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/summaries/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ q: query })
+    });
+    if (!response.ok) {
+      throw new Error('Failed to search summaries');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching summaries:', error);
+    return {
+      total: 0,
+      offset: 0,
+      limit: 0,
+      summaries: []
+    };
+  }
+};
+
+export type { NewsItem, SummaryItem }; 
