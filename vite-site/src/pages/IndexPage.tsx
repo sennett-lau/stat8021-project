@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { getNewsById, getSummaries, searchSummaries, type NewsItem, type SummaryItem } from '@/utils/api';
+import { getNewsById, getSummaries, searchNews, searchSummaries, type NewsItem, type SummaryItem } from '@/utils/api';
 
 const IndexPage = () => {
   const [summaries, setSummaries] = useState<SummaryItem[]>([]);
@@ -30,7 +30,8 @@ const IndexPage = () => {
       if (selectedSummary && selectedSummary.news_articles_ids.length > 0) {
         setIsLoading(true);
         try {
-          const newsData = await getNewsById(selectedSummary.news_articles_ids);
+          // const newsData = await getNewsById(selectedSummary.news_articles_ids);
+          const newsData = await searchNews(selectedSummary.summary);
           setRelatedNews(newsData.articles);
         } catch (error) {
           console.error('Failed to fetch related news:', error);

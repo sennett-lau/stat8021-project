@@ -126,7 +126,7 @@ def search_news():
         
     query = search_data.get('q', '')
     source = search_data.get('source')
-    limit = int(search_data.get('limit', 10))
+    limit = int(search_data.get('limit', 5))#10))
     
     if not query:
         return jsonify({"error": "Search query is required"}), 400
