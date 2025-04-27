@@ -22,7 +22,7 @@ def get_embedding_model():
             from sentence_transformers import SentenceTransformer
             print("Loading sentence transformer model...")
             # Use a smaller, faster model for demo purposes
-            _model = SentenceTransformer('all-MiniLM-L6-v2')  # 384 dimensions
+            _model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')  # 384 dimensions
             print("Model loaded successfully")
         except ImportError:
             print("WARNING: sentence-transformers not available, falling back to simple embeddings")
