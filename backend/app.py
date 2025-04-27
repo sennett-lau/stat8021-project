@@ -152,8 +152,8 @@ def search_news():
             sql_query += " WHERE source = %s"
             params.append(source)
             
-        sql_query += " ORDER BY distance LIMIT %s"
-        params.append(limit)
+        # sql_query += " ORDER BY distance LIMIT %s"
+        # params.append(limit)
         
         cur.execute(sql_query, params)
         rows = cur.fetchall()
@@ -173,6 +173,8 @@ def search_news():
         
         cur.close()
         conn.close()
+
+        articles = sorted(articles, key=lambda article: article["similarity"], reverse=True)[:limit]
         
         return jsonify({
             "query": query,
@@ -219,6 +221,10 @@ def get_summaries():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # Get total count for pagination
+        cur.execute("SELECT COUNT(*) FROM summaries")
+        total_count = cur.fetchone()[0]
         
         if query:
             # Search by similarity
@@ -228,14 +234,22 @@ def get_summaries():
             embedding = create_simple_embedding(query)
             
             # Search by vector similarity
+            # workaround of alias-orderby conflict
             sql_query = """
                 SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
-                       embedding <=> %s::vector as distance
+                    embedding <=> %s::vector as distance
                 FROM summaries
-                ORDER BY distance
-                LIMIT %s OFFSET %s
             """
-            cur.execute(sql_query, (str(embedding), limit, offset))
+
+            #"""
+            #    SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
+            #           embedding <=> %s::vector as distance
+            #    FROM summaries
+            #    ORDER BY distance
+            #    LIMIT %s
+            #"""
+
+            cur.execute(sql_query, (str(embedding), ))
         else:
             # Get all summaries
             sql_query = """
@@ -247,10 +261,6 @@ def get_summaries():
             cur.execute(sql_query, (limit, offset))
         
         rows = cur.fetchall()
-        
-        # Get total count for pagination
-        cur.execute("SELECT COUNT(*) FROM summaries")
-        total_count = cur.fetchone()[0]
         
         # Format results
         summaries = []
@@ -279,6 +289,10 @@ def get_summaries():
         
         cur.close()
         conn.close()
+
+        # workaround of alias-orderby conflict
+        if query:
+            summaries = sorted(summaries, key=lambda summary: summary["similarity"], reverse=True)[offset:limit]
         
         return jsonify({
             "total": total_count,
@@ -359,14 +373,22 @@ def search_summary():
         cur = conn.cursor()
         
         # Search by vector similarity
+        # workaround of alias-orderby conflict
         sql_query = """
             SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
                    embedding <=> %s::vector as distance
             FROM summaries
-            ORDER BY distance
-            LIMIT %s
         """
-        cur.execute(sql_query, (str(embedding), limit))
+
+        #"""
+        #    SELECT id, title, tldr, summary, news_articles_ids, refs, created_at,
+        #           embedding <=> %s::vector as distance
+        #    FROM summaries
+        #    ORDER BY distance
+        #    LIMIT %s
+        #"""
+
+        cur.execute(sql_query, (str(embedding), ))
         rows = cur.fetchall()
         
         # Format results
@@ -392,6 +414,9 @@ def search_summary():
         cur.close()
         conn.close()
         
+        # workaround of alias-orderby conflict
+        summaries = sorted(summaries, key=lambda summary: summary["similarity"], reverse=True)[:limit]
+
         return jsonify({
             "query": query,
             "summaries": summaries
