@@ -5,13 +5,15 @@ import { getNewsById, getSummaries, searchNews, searchSummaries, type NewsItem, 
 const IndexPage = () => {
   const [summaries, setSummaries] = useState<SummaryItem[]>([]);
   const [selectedSummary, setSelectedSummary] = useState<SummaryItem | null>(null);
+  const [sourceNews, setSourceNews] = useState<NewsItem[]>([]);
   const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
   const [selectedNewsItem, setSelectedNewsItem] = useState<NewsItem | null>(null);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSource, setIsLoadingSource] = useState(false);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
   useEffect(() => {
     const fetchSummaries = async () => {
@@ -26,18 +28,40 @@ const IndexPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchRelatedNews = async () => {
+    const fetchSourceNews = async () => {
       if (selectedSummary && selectedSummary.news_articles_ids.length > 0) {
-        setIsLoading(true);
+        setIsLoadingSource(true);
+        try {
+          const newsData = await getNewsById(selectedSummary.news_articles_ids);
+          // const newsData = await searchNews(selectedSummary.summary);
+          setSourceNews(newsData.articles);
+        } catch (error) {
+          console.error('Failed to fetch sources:', error);
+          setSourceNews([]);
+        } finally {
+          setIsLoadingSource(false);
+        }
+      } else {
+        setSourceNews([]);
+      }
+    };
+
+    fetchSourceNews();
+  }, [selectedSummary]);
+
+  useEffect(() => {
+    const fetchRelatedNews = async () => {
+      if (selectedSummary) {
+        setIsLoadingRelated(true);
         try {
           // const newsData = await getNewsById(selectedSummary.news_articles_ids);
-          const newsData = await searchNews(selectedSummary.summary);
+          const newsData = await searchNews(selectedSummary.summary, 3);
           setRelatedNews(newsData.articles);
         } catch (error) {
           console.error('Failed to fetch related news:', error);
           setRelatedNews([]);
         } finally {
-          setIsLoading(false);
+          setIsLoadingRelated(false);
         }
       } else {
         setRelatedNews([]);
@@ -82,8 +106,8 @@ const IndexPage = () => {
   };
 
   const handleReferenceClick = (index: number) => {
-    if (relatedNews.length > index) {
-      setSelectedNewsItem(relatedNews[index]);
+    if (sourceNews.length > index) {
+      setSelectedNewsItem(sourceNews[index]);
       setNewsModalOpen(true);
     }
   };
@@ -118,11 +142,11 @@ const IndexPage = () => {
     return (
       <p className="text-gray-300">
         {groupedSentences.map((sentence, index) => {
-          const referenceIndex = index % (relatedNews.length || 1);
+          const referenceIndex = index % (sourceNews.length || 1);
           return (
             <span key={index}>
               {sentence}
-              {relatedNews.length > 0 && index < groupedSentences.length - 1 && (
+              {sourceNews.length > 0 && index < groupedSentences.length - 1 && (
                 <sup 
                   className="ml-1 text-blue-400 cursor-pointer hover:text-blue-300"
                   onClick={() => handleReferenceClick(referenceIndex)}
@@ -225,30 +249,30 @@ const IndexPage = () => {
               )}
               
               <div className="prose prose-invert max-w-none mb-6">
-                {isLoading ? (
+                {isLoadingSource ? (
                   <p className="text-gray-300">{selectedSummary.summary}</p>
                 ) : (
                   renderSummaryWithReferences(selectedSummary.summary)
                 )}
                 
-                {relatedNews.length > 0 && (
+                {sourceNews.length > 0 && (
                   <div className="mt-3 text-sm text-gray-400">
-                    <p>Click on reference numbers [n] to view the related article.</p>
+                    <p>Click on reference numbers [n] to view the source articles.</p>
                   </div>
                 )}
               </div>
               
-              {/* Related News Articles */}
-              {isLoading ? (
+              {/* Source Articles */}
+              {isLoadingSource ? (
                 <div className="mt-6">
-                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Source Articles</h3>
                   <p className="text-gray-400">Loading articles...</p>
                 </div>
-              ) : relatedNews.length > 0 ? (
+              ) : sourceNews.length > 0 ? (
                 <div className="mt-6">
-                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Source Articles</h3>
                   <ul className="space-y-3 mt-4">
-                    {relatedNews.map((article, index) => (
+                    {sourceNews.map((article, index) => (
                       <li 
                         key={article.id}
                         className="border border-gray-800 rounded-md p-3 hover:bg-gray-800/50 transition-colors cursor-pointer"
@@ -268,10 +292,45 @@ const IndexPage = () => {
                 </div>
               ) : selectedSummary.news_articles_ids.length > 0 ? (
                 <div className="mt-6">
-                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Source Articles</h3>
                   <p className="text-gray-400">No articles found</p>
                 </div>
               ) : null}
+
+              {/* Related News Articles */}
+              {isLoadingRelated ? (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <p className="text-gray-400">Loading articles...</p>
+                </div>
+              ) : relatedNews.length > 0 ? (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <ul className="space-y-3 mt-4">
+                    {relatedNews.map((article, index) => (
+                      <li 
+                        key={article.id}
+                        className="border border-gray-800 rounded-md p-3 hover:bg-gray-800/50 transition-colors cursor-pointer"
+                        onClick={() => handleNewsClick(article)}
+                      >
+                        <h4 className="text-lg font-medium text-blue-400 hover:text-blue-300">
+                          {index + 1}. {article.title}
+                        </h4>
+                        <div className="flex items-center text-sm text-gray-400 mt-1">
+                          <span className="mr-2">{article.source}</span>
+                          <span>•</span>
+                          <span className="ml-2">{formatDate(article.pub_date)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-200">Related News Articles</h3>
+                  <p className="text-gray-400">No articles found</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">

@@ -164,13 +164,13 @@ export const getNewsById = async (ids: number[]): Promise<NewsResponse> => {
   }
 };
 
-export const searchNews = async (query: string): Promise<NewsResponse> => {
+export const searchNews = async (query: string, limit?: number): Promise<NewsResponse> => {
   if (IS_MOCK_API) {
     console.log('Using mock data for searchNews');
     return Promise.resolve({
       total: mockNewsData.length,
       offset: 0,
-      limit: mockNewsData.length,
+      limit: limit ?? mockNewsData.length,
       articles: mockNewsData.filter(
         item => 
           item.title.toLowerCase().includes(query.toLowerCase()) || 
@@ -185,7 +185,7 @@ export const searchNews = async (query: string): Promise<NewsResponse> => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ q: query })
+      body: JSON.stringify({ q: query, limit: limit })
     });
     if (!response.ok) {
       throw new Error('Failed to search news');
@@ -230,13 +230,13 @@ export const getSummaries = async (): Promise<SummaryResponse> => {
   }
 };
 
-export const searchSummaries = async (query: string): Promise<SummaryResponse> => {
+export const searchSummaries = async (query: string, limit?: number): Promise<SummaryResponse> => {
   if (IS_MOCK_API) {
     console.log('Using mock data for searchSummaries');
     return Promise.resolve({
       total: mockSummaryData.length,
       offset: 0,
-      limit: mockSummaryData.length,
+      limit: limit ?? mockSummaryData.length,
       summaries: mockSummaryData.filter(
         item => 
           item.title.toLowerCase().includes(query.toLowerCase()) || 
@@ -251,7 +251,7 @@ export const searchSummaries = async (query: string): Promise<SummaryResponse> =
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ q: query })
+      body: JSON.stringify({ q: query, limit: limit })
     });
     if (!response.ok) {
       throw new Error('Failed to search summaries');
