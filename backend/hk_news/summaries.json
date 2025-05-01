@@ -11,22 +11,22 @@
         "refs": [
           {
             "sentence": "The MTR Corporation has proposed a 9.4 percent fare increase for its Airport Express service, which would take effect in June if approved by the legislature.",
-            "id": "10"
+            "id": "29"
           },
           {
             "sentence": "Under the proposal, an adult Octopus card fare from Hong Kong Station to the airport would rise from HK$110 to HK$120, while regular single-journey ticket prices could go up to HK$130.",
-            "id": "10"
+            "id": "29"
           },
           {
             "sentence": "The fare hike, which would be the first in eight years, is attributed to sustained financial challenges since the COVID-19 pandemic, with passenger numbers still only at 70 percent of pre-pandemic levels.",
-            "id": "191"
+            "id": "318"
           },
           {
             "sentence": "MTR also noted that fare increases for airport rail services in other major cities have ranged from 13 to 38 percent over the past eight years.",
-            "id": "191"
+            "id": "318"
           }
         ],
-        "news_articles_ids": [10, 191]
+        "news_articles_ids": [29, 318]
     },
     {
         "title": "China Expresses Condolences and Highlights Vatican Ties After Pope Francis's Death",
@@ -40,22 +40,22 @@
         "refs": [
           {
             "sentence": "Following the death of Pope Francis, China’s Foreign Ministry extended its condolences and praised the recent positive developments in China-Vatican relations.",
-            "id": "11"
+            "id": "30"
           },
           {
             "sentence": "Ministry spokesman Guo Jiakun noted that both sides have maintained constructive contact and friendly exchanges in recent years.",
-            "id": "185"
+            "id": "312"
           },
           {
             "sentence": "The Vatican and Beijing had signed a landmark agreement in 2018 on the appointment of bishops, which was renewed last year, aimed at bridging the longstanding schism in China's Catholic community.",
-            "id": "185"
+            "id": "312"
           },
           {
             "sentence": "Pope Francis had shown interest in improving ties with China, calling the country a 'great nation' and expressing hope for a future visit.",
-            "id": "185"
+            "id": "312"
           }
         ],
-        "news_articles_ids": [11, 185]
+        "news_articles_ids": [30, 312]
     },
     {
         "title": "US Proposes Massive Tariffs on Southeast Asian Solar Panels Over Chinese Trade Practices",
@@ -69,26 +69,55 @@
         "refs": [
             {
                 "sentence": "The United States has announced plans to impose tariffs as high as 3,521 percent on solar panel imports from Southeast Asian countries, targeting what it describes as unfair Chinese trade practices.",
-                "id": "12"
+                "id": "31"
             },
             {
                 "sentence": "The proposed duties follow year-long anti-dumping and countervailing duty investigations initiated by U.S. and other solar manufacturers.",
-                "id": "12"
+                "id": "31"
             },
             {
                 "sentence": "The tariffs would impact firms operating in Cambodia, Thailand, Malaysia, and Vietnam, including Chinese companies like Jinko Solar and Trina Solar.",
-                "id": "189"
+                "id": "316"
             },
             {
                 "sentence": "These tariffs, which still require approval from the International Trade Commission in June, come amid broader tensions over trade and protectionism.",
-                "id": "12"
+                "id": "31"
             },
             {
                 "sentence": "China has criticized the move, calling it protectionist and counterproductive.",
-                "id": "189"
+                "id": "316"
             }
         ],
-        "news_articles_ids": [12, 189]
+        "news_articles_ids": [31, 316]
+    },
+    {
+        "title": "Hong Kong Police Question Parents of US-Based Activist Frances Hui",
+        "tldr": [
+            "Hong Kong national security police questioned the parents of activist Frances Hui on Thursday.",
+            "Hui is a US-based activist wanted under the national security law for allegedly colluding with foreign forces.",
+            "Her mother and father were taken to separate police stations in Sha Tin and released later the same day.",
+            "The questioning occurred after new US sanctions on Hong Kong officials, which Hui had publicly supported."
+        ],
+        "summary": "Hong Kong’s national security police questioned the parents of US-based activist Frances Hui on Thursday, escorting them to separate police stations in Sha Tin. Hui, who left Hong Kong in 2020 and was granted asylum in the US, is among 19 activists wanted under the national security law for allegedly colluding with foreign powers. The incident followed a new round of US sanctions on Hong Kong officials, which Hui has advocated for in her role with the Committee for Freedom in Hong Kong Foundation. Authorities in the city have labeled the group 'anti-China,' and canceled Hui's passport in 2023 along with those of six other activists.",
+        "refs": [
+            {
+            "sentence": "Hong Kong’s national security police questioned the parents of US-based activist Frances Hui on Thursday, escorting them to separate police stations in Sha Tin.",
+            "id": "79"
+            },
+            {
+            "sentence": "Hui, who left Hong Kong in 2020 and was granted asylum in the US, is among 19 activists wanted under the national security law for allegedly colluding with foreign powers.",
+            "id": "941"
+            },
+            {
+            "sentence": "The incident followed a new round of US sanctions on Hong Kong officials, which Hui has advocated for in her role with the Committee for Freedom in Hong Kong Foundation.",
+            "id": "941"
+            },
+            {
+            "sentence": "Authorities in the city have labeled the group 'anti-China,' and canceled Hui's passport in 2023 along with those of six other activists.",
+            "id": "941"
+            }
+        ],
+        "news_articles_ids": [79, 941]
     },
     {
         "title": "Leung Chai-yan, Daughter of Former Hong Kong Leader CY Leung, Dies at 33",
@@ -102,22 +131,22 @@
         "refs": [
             {
             "sentence": "Leung Chai-yan, the 33-year-old daughter of former Hong Kong chief executive CY Leung, has passed away.",
-            "id": "68"
+            "id": "87"
             },
             {
             "sentence": "Her father confirmed her death via social media, stating that she died very suddenly and peacefully in bed.",
-            "id": "397"
+            "id": "524"
             },
             {
             "sentence": "Police and forensic investigators have ruled out suicide and other suspicious causes.",
-            "id": "68"
+            "id": "87"
             },
             {
             "sentence": "According to authorities, she was found unresponsive at a serviced apartment in Shau Kei Wan on Tuesday evening and was pronounced dead at the scene.",
-            "id": "397"
+            "id": "524"
             }
         ],
-        "news_articles_ids": [68, 397]
+        "news_articles_ids": [87, 524]
     },
     {
         "title": "Hong Kong Man Jailed for One Year Under Article 23 for Seditious Social Media Posts",
@@ -131,21 +160,21 @@
         "refs": [
             {
                 "sentence": "Chow Kim-ho, a 57-year-old former member of the League of Social Democrats, has been sentenced to one year in prison for posting 145 seditious messages on social media platforms, including Facebook, Instagram, and Threads.",
-                "id": "69"
+                "id": "88"
             },
             {
                 "sentence": "He pleaded guilty to one count of knowingly publishing seditious publications under the Safeguarding National Security Ordinance, commonly referred to as Article 23.",
-                "id": "1007"
+                "id": "1134"
             },
             {
                 "sentence": "The court found that his posts, made between March and November 2023, incited hatred toward the Chinese Communist Party and Hong Kong authorities.",
-                "id": "1007"
+                "id": "1134"
             },
             {
                 "sentence": "During sentencing, the magistrate emphasized that Chow's repeated sharing of such content helped 'set a tone' that promoted government overthrow.",
-                "id": "1007"
+                "id": "1134"
             }
         ],
-        "news_articles_ids": [69, 1007]
+        "news_articles_ids": [88, 1134]
     }
 ]
