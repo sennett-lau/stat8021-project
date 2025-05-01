@@ -63,6 +63,28 @@ class NewsCrawlerBase(ABC):
                     if 'hkfp' in filename:
                         df[col] = df[col].apply(self._clean_text)
 
+            # Fix date formatting for hkfp
+            if 'pub_date' in df.columns and 'hkfp' in filename:
+                def fix_date(date_str):
+                    try:
+                        if isinstance(date_str, str):
+                            # Parse the date string
+                            # Split the time and date parts
+                            time_part = date_str.split(', ')[0]  # "17:54"
+                            date_part = date_str.split(', ')[1]  # "29 April 2025"
+                                
+                            # Combine them into a single datetime string
+                            datetime_str = f"{date_part} {time_part}"
+                            # Parse the combined datetime
+                            parsed_date = datetime.strptime(datetime_str, '%d %B %Y %H:%M')                            
+                            # Format the date as YYYY-MM-DD HH:MM:SS
+                            return parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        logging.warning(f"Date parsing error for {date_str}: {str(e)}")
+                    return date_str
+                
+                df['pub_date_formatted'] = df['pub_date'].apply(fix_date)
+            
             # Save the cleaned data
             df.to_csv(file_path, index=False, encoding='utf-8-sig')
             logging.info(f"Cleaned historical data in {filename}")
