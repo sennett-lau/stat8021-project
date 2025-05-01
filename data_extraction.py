@@ -20,7 +20,7 @@ class NewsCrawlerBase(ABC):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        self.output_dir = os.path.abspath('hk_news')
+        self.output_dir = os.path.abspath('backend/hk_news')
         os.makedirs(self.output_dir, exist_ok=True)
 
     @abstractmethod
@@ -43,6 +43,32 @@ class NewsCrawlerBase(ABC):
                 logging.warning("No articles to save")
         except Exception as e:
             logging.error(f"Error saving to CSV: {str(e)}")
+
+    def clean_historical_data(self, filename):
+        """Clean historical data in CSV files"""
+        try:
+            file_path = os.path.join(self.output_dir, filename)
+            if not os.path.exists(file_path):
+                logging.warning(f"File {file_path} does not exist")
+                return
+            
+            # Read the CSV file
+            df = pd.read_csv(file_path)
+            
+            # Clean text columns
+            text_columns = ['title', 'description', 'full_content', 'author']
+            for col in text_columns:
+                if col in df.columns:
+                    # Apply the cleaning function to each cell in the column
+                    df[col] = df[col].apply(self._clean_text)
+                    # print(df[col])
+            
+            # Save the cleaned data
+            df.to_csv(file_path, index=False, encoding='utf-8-sig')
+            logging.info(f"Cleaned historical data in {filename}")
+            
+        except Exception as e:
+            logging.error(f"Error cleaning historical data in {filename}: {str(e)}")
 
 class SCMPNewsCrawler(NewsCrawlerBase):
     """SCMP crawler implementation"""
@@ -176,6 +202,33 @@ class HKFPCrawler(NewsCrawlerBase):
         super().__init__()
         self.base_url = 'https://hongkongfp.com'
 
+    def _clean_text(self, text):
+        """Clean text by removing HTML entities and hyperlinks"""
+        if not isinstance(text, str):
+            return text
+            
+        # Replace HTML entities with their corresponding characters
+        text = text.replace('&#8216;', "'")
+        text = text.replace('&#8217;', "'")
+        text = text.replace('&#8220;', '"')
+        text = text.replace('&#8221;', '"')
+        text = text.replace('&amp;', '&')
+        text = text.replace('&nbsp;', ' ')
+        text = text.replace('&#8211;', '-')
+        text = text.replace('&#8212;', '—')
+        text = text.replace('&#8230;', '...')
+        
+        # Remove hyperlinks
+        text = re.sub(r'<a[^>]*>(.*?)</a>', r'\1', text)
+        
+        # Remove any remaining HTML tags
+        text = re.sub(r'<[^>]+>', '', text)
+        
+        # Remove extra whitespace
+        text = ' '.join(text.split())
+        
+        return text
+
     def parse_feed(self):
         """Parse HKFP main page and individual articles"""
         all_articles = []
@@ -200,13 +253,16 @@ class HKFPCrawler(NewsCrawlerBase):
                     print(f"Processing URL: {url}")
                     print(f"Title: {title}")
                     
+                    # Clean the title
+                    cleaned_title = self._clean_text(title)
+                    
                     # Get article content
                     article_content = self.extract_article_content(url)
                     
                     if article_content:
                         article = {
                             'source': 'HKFP',
-                            'title': title.strip(),
+                            'title': cleaned_title,
                             'link': url,
                             'pub_date': article_content.get('pub_date', ''),
                             'full_content': article_content.get('full_content', ''),
@@ -225,7 +281,7 @@ class HKFPCrawler(NewsCrawlerBase):
                                 article['pub_date_formatted'] = article['pub_date']
                         
                         all_articles.append(article)
-                        logging.info(f"Processed article: {title}")
+                        logging.info(f"Processed article: {cleaned_title}")
                         
                         time.sleep(2)  # Polite delay between requests
                         
@@ -248,39 +304,34 @@ class HKFPCrawler(NewsCrawlerBase):
             cleaned_text = re.sub(r'<script.*?</script>', '', response.text, flags=re.DOTALL)
             cleaned_text = re.sub(r'<style.*?</style>', '', cleaned_text, flags=re.DOTALL)
             
-            # Extract author
-            author_pattern = r'by\s+([^<]+)<'
-            author_match = re.search(author_pattern, cleaned_text)
-            author = author_match.group(1).strip() if author_match else ''
-            
-            # Extract date
-            date_pattern = r'(\d{2}:\d{2},\s+\d+\s+[A-Za-z]+\s+\d{4})'
-            date_match = re.search(date_pattern, cleaned_text)
-            pub_date = date_match.group(1) if date_match else ''
+            # Parse the cleaned HTML
+            soup = BeautifulSoup(cleaned_text, 'html.parser')
             
             # Extract article content
-            # Find the main article content div
-            content_pattern = r'<div class="entry-content[^"]*">(.*?)</div>'
-            content_match = re.search(content_pattern, cleaned_text, re.DOTALL)
+            article_content = {}
             
-            if content_match:
-                content_html = content_match.group(1)
-                # Extract paragraphs
-                paragraphs = re.findall(r'<p>(.*?)</p>', content_html)
-                # Clean and join paragraphs
-                content = ' '.join(p.strip() for p in paragraphs if p.strip())
-                
-                return {
-                    'full_content': content,
-                    'pub_date': pub_date,
-                    'author': author
-                }
+            # Get publication date
+            date_element = soup.find('time')
+            if date_element:
+                article_content['pub_date'] = date_element.get_text(strip=True)
             
-            return {'full_content': '', 'pub_date': '', 'author': ''}
+            # Get author
+            author_element = soup.find('span', class_='author')
+            if author_element:
+                article_content['author'] = author_element.get_text(strip=True)
+            
+            # Get main content
+            content_element = soup.find('div', class_='entry-content')
+            if content_element:
+                # Clean the content text
+                content_text = self._clean_text(str(content_element))
+                article_content['full_content'] = content_text
+            
+            return article_content
             
         except Exception as e:
             logging.error(f"Error extracting content from {url}: {str(e)}")
-            return {'full_content': '', 'pub_date': '', 'author': ''}
+            return None
 
 class RTHKCrawler(NewsCrawlerBase):
     """RTHK English news crawler"""
@@ -385,7 +436,7 @@ class RTHKCrawler(NewsCrawlerBase):
 def main():
     try:
         # Create output directory
-        output_dir = os.path.abspath('hk_news')
+        output_dir = os.path.abspath('backend/hk_news')
         os.makedirs(output_dir, exist_ok=True)
         logging.info(f"Created output directory at: {output_dir}")
         
@@ -396,14 +447,26 @@ def main():
             'RTHK': set(),
         }
         
-        # Load existing articles from CSV files
+        # Load and clean existing articles from CSV files
         for source in existing_articles.keys():
             filename = os.path.join(output_dir, f'{source.lower()}_news.csv')
             if os.path.exists(filename):
+                # Clean historical data
+                crawler = None
+                if source == 'SCMP':
+                    crawler = SCMPNewsCrawler()
+                elif source == 'HKFP':
+                    crawler = HKFPCrawler()
+                elif source == 'RTHK':
+                    crawler = RTHKCrawler()
+                
+                if crawler:
+                    crawler.clean_historical_data(f'{source.lower()}_news.csv')
+                
                 df = pd.read_csv(filename)
                 # Store URLs of existing articles
                 existing_articles[source] = set(df['link'].tolist())
-                logging.info(f"Loaded {len(existing_articles[source])} existing {source} articles")
+                logging.info(f"Loaded and cleaned {len(existing_articles[source])} existing {source} articles")
         
         # Dictionary to store new articles
         new_articles_by_source = {
@@ -506,7 +569,7 @@ def update_scmp_content():
     """Update SCMP articles with full paragraph content"""
     try:
         # Read the existing SCMP CSV file
-        csv_path = os.path.join('hk_news', 'scmp_news.csv')
+        csv_path = os.path.join('backend/hk_news', 'scmp_news.csv')
         df = pd.read_csv(csv_path)
         
         # Add new column for full paragraphs if it doesn't exist
