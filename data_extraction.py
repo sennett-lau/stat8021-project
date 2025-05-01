@@ -60,9 +60,9 @@ class NewsCrawlerBase(ABC):
             for col in text_columns:
                 if col in df.columns:
                     # Apply the cleaning function to each cell in the column
-                    df[col] = df[col].apply(self._clean_text)
-                    # print(df[col])
-            
+                    if 'hkfp' in filename:
+                        df[col] = df[col].apply(self._clean_text)
+
             # Save the cleaned data
             df.to_csv(file_path, index=False, encoding='utf-8-sig')
             logging.info(f"Cleaned historical data in {filename}")
