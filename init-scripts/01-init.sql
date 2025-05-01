@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS news_articles (
     pub_date TIMESTAMP NOT NULL,
     content TEXT NOT NULL,
     embedding vector(384), -- 384-dimension vector, adjust as needed
+    is_summarized BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

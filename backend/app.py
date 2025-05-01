@@ -424,6 +424,75 @@ def search_summary():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/random-summary', methods=['POST'])
+def create_random_summary():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get a random article that hasn't been summarized yet
+        cur.execute("""
+            SELECT id, source, title, content, embedding
+            FROM news_articles
+            WHERE is_summarized = FALSE
+            ORDER BY RANDOM()
+            LIMIT 1
+        """)
+        
+        random_article = cur.fetchone()
+        if not random_article:
+            return jsonify({"error": "No unsummarized articles found"}), 404
+            
+        random_article_id = random_article[0]
+        random_article_source = random_article[1]
+        random_article_embedding = random_article[4]
+        
+        # Find 5 closest articles from different sources
+        cur.execute("""
+            SELECT id, source, title, content
+            FROM news_articles
+            WHERE is_summarized = FALSE
+            AND source != %s
+            ORDER BY embedding <=> %s::vector
+            LIMIT 5
+        """, (random_article_source, random_article_embedding))
+
+        related_articles = cur.fetchall()
+        if len(related_articles) < 2:
+            return jsonify({"error": "Not enough related articles found from different sources"}), 404
+            
+        # Combine all articles for summarization
+        article_ids = [random_article_id]
+        source_set = set()
+
+        for article in related_articles:
+            if article[1] not in source_set:
+                article_ids.append(article[0])
+                source_set.add(article[1])
+        
+        # Generate summary
+        from summarize import summarize_news_articles
+        result = summarize_news_articles(article_ids)
+        
+        if "error" in result:
+            return jsonify({"error": result["error"]}), 500
+            
+        # Mark articles as summarized
+        cur.execute("""
+            UPDATE news_articles
+            SET is_summarized = TRUE
+            WHERE id = ANY(%s)
+        """, (article_ids,))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 def load_data_async():
     """Load data asynchronously on startup"""
     try:
