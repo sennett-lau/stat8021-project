@@ -164,8 +164,8 @@ def import_csv_file(source_name, file_path, cursor):
             
             # Insert into database
             cursor.execute("""
-                INSERT INTO news_articles (source, title, link, pub_date, content, embedding)
-                VALUES (%s, %s, %s, %s, %s, %s::vector)
+                INSERT INTO news_articles (source, title, link, pub_date, content, embedding, is_summarized)
+                VALUES (%s, %s, %s, %s, %s, %s::vector, FALSE)
                 ON CONFLICT (link) DO NOTHING
             """, (
                 source_name, 
